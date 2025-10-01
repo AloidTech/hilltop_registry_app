@@ -1,15 +1,9 @@
 "use client";
-import {
-  BiCalendarEvent,
-  BiFilterAlt,
-  BiSearch,
-  BiSolidCalendarEvent,
-} from "react-icons/bi";
+import { BiCalendarEvent } from "react-icons/bi";
 
 import { MdMenu } from "react-icons/md";
 import { CgProfile } from "react-icons/cg";
 import { useState } from "react";
-import { RiProfileFill, RiProfileLine } from "react-icons/ri";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 

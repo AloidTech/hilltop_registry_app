@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { Member } from "../../page";
 import { DetailsSectionMobile } from "@/components/DetailsSection";
 import { useParams } from "next/navigation";
 
@@ -32,7 +31,7 @@ const Members = [
 ];
 
 function MemberInfo() {
-  var { memberId } = useParams();
+  const { memberId } = useParams();
   const selectedMember = Members.filter((member) => member.id === memberId);
 
   return (

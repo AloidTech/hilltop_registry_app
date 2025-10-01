@@ -1,7 +1,6 @@
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
 import { NextResponse } from "next/server";
-import { Member } from "../../(root)/page";
 
 export async function GET() {
   console.log("🚀 API route called");

@@ -1,35 +1,15 @@
 "use client";
 import React from "react";
-import { useState } from "react";
-import {
-  FiEdit3,
-  FiPhone,
-  FiMail,
-  FiUser,
-  FiCalendar,
-  FiMapPin,
-  FiSettings,
-  FiMoreHorizontal,
-  FiTrash2,
-} from "react-icons/fi";
-import { MdWork, MdVerified, MdLocationOn } from "react-icons/md";
-import { BiTime, BiDollarCircle, BiCopy, BiArrowBack } from "react-icons/bi";
-import { redirect } from "next/navigation";
+import { FiUser, FiCalendar } from "react-icons/fi";
+import { MdLocationOn } from "react-icons/md";
 
 interface ServicePlanProp {
-  TimePeriod: String;
-  Program: String;
-  Anchors: Array<String>;
+  TimePeriod: string;
+  Program: string;
+  Anchors: Array<string>;
 }
-[];
 
-interface ServicePlansProps {
-  ServicePlanProp: Array<ServicePlanProp>;
-}
-[];
-
-var servicePlanDates: any = [];
-
+const servicePlanDates: string[] = [];
 
 const ServicePlans = {
   "last Week": [
@@ -73,7 +53,6 @@ for (const date in ServicePlans) {
 }
 
 function ServicePlanPage() {
-  const [isEditing, setIsEditing] = useState(false);
   return (
     <div className="flex-1 pb-6 px-6 bg-neutral-800/50 h-screen overflow-y-auto">
       {/* Header with Actions */}

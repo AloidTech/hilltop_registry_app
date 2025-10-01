@@ -1,25 +1,25 @@
 "use client";
 import Image from "next/image";
-import { BiCalendarEvent, BiFilterAlt, BiSearch } from "react-icons/bi";
-import { FaFilter, FaUserPlus, FaSpinner } from "react-icons/fa";
+import { BiFilterAlt, BiSearch } from "react-icons/bi";
+import { FaUserPlus, FaSpinner } from "react-icons/fa";
 import DetailsSection from "@/components/DetailsSection";
 import { useState } from "react";
 import { useEffect } from "react";
-import { NavBarDeskt, NavBarMobile } from "@/components/NavBar";
-import { redirect } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export interface Member {
   id: string;
   name: string;
-  number: string;
-  parentNum: string;
+  number?: string;
+  parentNum?: string;
   email?: string;
-  role: string;
+  role?: string;
   team?: string;
 }
 
 export default function Home() {
+  const router = useRouter();
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
@@ -132,7 +132,7 @@ export default function Home() {
                     transition={{ delay: index * 0.05 }}
                     onClick={() => {
                       setSelectedMember(member);
-                      redirect(`/member_info/${member.id}`);
+                      router.push(`/member_info/${member.id}`);
                     }}
                     className="flex gap-4 h-18 px-2 py-1 items-center rounded-md focus:bg-neutral-700 hover:bg-neutral-700 mb-0.5 w-full transition-colors"
                   >

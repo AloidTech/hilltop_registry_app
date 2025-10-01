@@ -7,7 +7,6 @@ import {
   FiMail,
   FiUser,
   FiMoreHorizontal,
-  FiTrash2,
 } from "react-icons/fi";
 import { MdWork, MdVerified, MdLocationOn } from "react-icons/md";
 import { BiArrowBack } from "react-icons/bi";
