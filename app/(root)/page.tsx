@@ -30,9 +30,6 @@ export default function Home() {
     async function fetchMembers() {
       setLoading(true);
       try {
-        // Add a small delay to show loading animation
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
         const response = await fetch("/api/members");
         if (response.ok) {
           const data = await response.json();
@@ -99,83 +96,132 @@ export default function Home() {
                 "
             />
           </div>
+
+          {/* Loading State */}
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-8 space-y-4"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              >
+                <FaSpinner className="w-6 h-6 text-blue-500" />
+              </motion.div>
+              <p className="text-gray-400 text-sm">Loading members...</p>
+            </motion.div>
+          )}
+
           {/* Member Item Mobile*/}
-          <div className="md:hidden -mx-2.5 flex-2 overflow-y-auto space-y-2">
-            {filteredMembers.map((member) => (
-              <button
-                onClick={() => {
-                  setSelectedMember(member);
-                  redirect(`/member_info/${member.id}`);
-                }}
-                key={member.id}
-                className="flex gap-4 h-18 px-2 py-1 items-center rounded-md focus:bg-neutral-700 hover:bg-neutral-700 mb-0.5 w-full"
-              >
-                <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
-                  {/* Profile Image */}
-                  <Image
-                    src={"/iron rank1.png"}
-                    width={40}
-                    height={40}
-                    alt="Profile Picture"
-                    className="rounded-4xl"
-                  />
-                </div>
+          {!loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="md:hidden -mx-2.5 flex-2 overflow-y-auto space-y-2"
+            >
+              <AnimatePresence>
+                {filteredMembers.map((member, index) => (
+                  <motion.button
+                    key={member.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => {
+                      setSelectedMember(member);
+                      redirect(`/member_info/${member.id}`);
+                    }}
+                    className="flex gap-4 h-18 px-2 py-1 items-center rounded-md focus:bg-neutral-700 hover:bg-neutral-700 mb-0.5 w-full transition-colors"
+                  >
+                    <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
+                      {/* Profile Image */}
+                      <Image
+                        src={"/iron rank1.png"}
+                        width={40}
+                        height={40}
+                        alt="Profile Picture"
+                        className="rounded-4xl"
+                      />
+                    </div>
 
-                {/* Member Info */}
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex justify-between">
-                    <h3 className="text-white font-medium truncate capitalize">
-                      {member.name}
-                    </h3>
-                    <h3 className="text-gray-300 text-sm truncate">
-                      {member.number ?? member.parentNum ?? "-----"}
-                    </h3>
-                  </div>
+                    {/* Member Info */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="flex justify-between">
+                        <h3 className="text-white font-medium truncate capitalize">
+                          {member.name}
+                        </h3>
+                        <h3 className="text-gray-300 text-sm truncate">
+                          {member.number ?? member.parentNum ?? "-----"}
+                        </h3>
+                      </div>
 
-                  <p className="text-gray-400 text-sm truncate">
-                    {member.role ?? "member"} - {member.team ?? "none"}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
+                      <p className="text-gray-400 text-sm truncate">
+                        {member.role ?? "member"} - {member.team ?? "none"}
+                      </p>
+                    </div>
+                  </motion.button>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
           {/* Desktop Member list */}
-          <div className="hidden md:block flex-2 -mx-2.5 overflow-y-auto space-y-2">
-            {filteredMembers.map((member) => (
-              <button
-                onClick={() => setSelectedMember(member)}
-                key={member.id}
-                className="flex gap-4 h-18 px-2 py-1 items-center rounded-md focus:bg-neutral-700 hover:bg-neutral-700 mb-0.5 w-full"
-              >
-                <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
-                  {/* Profile Image */}
-                  <Image
-                    src={"/iron rank1.png"}
-                    width={40}
-                    height={40}
-                    alt="Profile Picture"
-                    className="rounded-4xl"
-                  />
-                </div>
+          {!loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="hidden md:block flex-2 -mx-2.5 overflow-y-auto space-y-2"
+            >
+              <AnimatePresence>
+                {filteredMembers.map((member, index) => (
+                  <motion.button
+                    key={member.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => setSelectedMember(member)}
+                    className={`flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-colors ${
+                      selectedMember?.id === member.id
+                        ? "bg-neutral-600"
+                        : "hover:bg-neutral-700"
+                    }`}
+                  >
+                    <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
+                      {/* Profile Image */}
+                      <Image
+                        src={"/iron rank1.png"}
+                        width={40}
+                        height={40}
+                        alt="Profile Picture"
+                        className="rounded-4xl"
+                      />
+                    </div>
 
-                {/* Member Info */}
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex justify-between">
-                    <h3 className="text-white font-medium truncate capitalize">
-                      {member.name}
-                    </h3>
-                    <h3 className="text-gray-300 text-sm truncate">
-                      {member.number ?? member.parentNum ?? "-----"}
-                    </h3>
-                  </div>
+                    {/* Member Info */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="flex justify-between">
+                        <h3 className="text-white font-medium truncate capitalize">
+                          {member.name}
+                        </h3>
+                        <h3 className="text-gray-300 text-sm truncate">
+                          {member.number ?? member.parentNum ?? "-----"}
+                        </h3>
+                      </div>
 
-                  <p className="text-gray-400 text-sm truncate">
-                    {member.role ?? "member"} - {member.team ?? "none"}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
+                      <p className="text-gray-400 text-sm truncate">
+                        {member.role ?? "member"} - {member.team ?? "none"}
+                      </p>
+                    </div>
+                  </motion.button>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </div>
         {/* Second Section */}
         <DetailsSection member={selectedMember} />

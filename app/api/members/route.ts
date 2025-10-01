@@ -1,4 +1,3 @@
-import { Credentials } from "./../../../node_modules/gtoken/build/esm/src/index.d";
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
 import { NextResponse } from "next/server";
@@ -7,12 +6,18 @@ import { Member } from "../../(root)/page";
 export async function GET() {
   console.log("🚀 API route called");
   try {
-    //SpreedSheet id
-    const spreadsheetId = "1UWuNgra7x1Im0sik9fFoOjZxlIOQI6Hlccz39l7agcU";
+    // Get spreadsheet ID from environment variables
+    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    if (!spreadsheetId) {
+      throw new Error("GOOGLE_SPREADSHEET_ID environment variable is not set");
+    }
     console.log("📊 Spreadsheet ID:", spreadsheetId);
 
     const auth = new GoogleAuth({
-      keyFile: "credentials.json",
+      credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      },
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
 
