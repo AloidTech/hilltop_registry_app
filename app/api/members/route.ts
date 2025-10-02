@@ -47,7 +47,7 @@ export async function GET() {
     console.error("Error fetching members: ", e);
     return NextResponse.json(
       { error: "Failed to fetch members" },
-      { status: 500 }
+      { status: 510 }
     );
   }
 }
