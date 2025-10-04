@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { GoogleAuth } from "google-auth-library";
+import { GoogleAuth, JWT } from "google-auth-library";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -12,13 +12,15 @@ export async function GET() {
     }
     console.log("📊 Spreadsheet ID:", spreadsheetId);
 
-    const auth = new GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      },
+    const auth = new JWT({
+      email: process.env.GOOGLE_CLIENT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
+    }); /*
+    const auth = new google.auth.GoogleAuth({
+      keyFile: "./cred3.json",
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });*/
 
     // Create a new Sheets API client.
     const service = google.sheets({ version: "v4", auth });
