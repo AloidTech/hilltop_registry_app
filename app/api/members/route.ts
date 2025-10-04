@@ -44,7 +44,9 @@ export async function GET() {
         team: row[6] || null, // ✅ Correct: fifth column
       })) || [];
 
-    return NextResponse.json({ members });
+    return NextResponse.json(
+      { members }
+    );
   } catch (e) {
     console.error("Error fetching members: ", e);
     return NextResponse.json(

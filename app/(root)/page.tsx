@@ -30,7 +30,9 @@ export default function Home() {
     async function fetchMembers() {
       setLoading(true);
       try {
-        const response = await fetch("/api/members");
+        const response = await fetch("/api/members", {
+          next: { revalidate: 60 },
+        });
         if (response.ok) {
           const data = await response.json();
           console.log(data);

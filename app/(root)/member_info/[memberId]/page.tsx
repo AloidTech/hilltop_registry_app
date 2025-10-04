@@ -1,38 +1,37 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { DetailsSectionMobile } from "@/components/DetailsSection";
 import { useParams } from "next/navigation";
-
-const Members = [
-  {
-    id: "212",
-    name: "zane Chidiebere",
-    number: "234+8161843341",
-    email: "zanealoid@gmail.com",
-    role: "worker",
-    team: "tech",
-  },
-  {
-    id: "213",
-    name: "Bera Chidiebere",
-    number: "234+8161843341",
-    email: "zanealoid@gmail.com",
-    role: "worker",
-    team: "tech",
-  },
-  {
-    id: "211",
-    name: "adriel Chidiebere",
-    number: "234+8161843341",
-    email: "zanealoid@gmail.com",
-    role: "worker",
-    team: "tech",
-  },
-];
+import { Member } from "@/app/(root)/page";
 
 function MemberInfo() {
+  const [loading, setLoading] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
+
+  useEffect(() => {
+    async function fetchMembers() {
+      setLoading(true);
+      try {
+        const response = await fetch("/api/members", {
+          next: { revalidate: 60 },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data);
+          setMembers(data.members);
+        }
+      } catch (error) {
+        console.error("Failed to fetch members:", error);
+        // Keep using fallback data
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchMembers();
+  }, []);
+
   const { memberId } = useParams();
-  const selectedMember = Members.filter((member) => member.id === memberId);
+  const selectedMember = members.filter((member) => member.id === memberId);
 
   return (
     <div className=" h-screen">

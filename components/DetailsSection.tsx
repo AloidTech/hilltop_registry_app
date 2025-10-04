@@ -188,7 +188,7 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
 
   if (!member) {
     return (
-      <div className="flex-1 p-10 bg-neutral-800/30">
+      <div className="flex-1 p-10 bg-neutral-800/30 h-screen">
         <div className="flex flex-col items-center justify-center h-full text-center">
           <div className="mb-8 p-6 bg-neutral-700/50 rounded-full">
             <Image
@@ -200,10 +200,10 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
             />
           </div>
           <h2 className="text-white text-2xl font-semibold mb-3">
-            Select a Member
+            No member selected, select a vaild member
           </h2>
           <p className="text-neutral-400 text-base max-w-md">
-            Choose a member from the list to view their detailed information,
+            Choose a member from the members page to view their detailed information,
             edit profile, and manage settings.
           </p>
         </div>
@@ -273,72 +273,74 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
                 Active
               </div>
               <div className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded-full text-sm font-medium capitalize">
-                {member.role}
+                
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Information Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        {/* Contact Information */}
-        <div className="bg-neutral-700/50 rounded-xl p-5">
-          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <FiUser className="w-4 h-4" />
-            Contact Information
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FiPhone className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300 text-sm">Phone</span>
+        {/* Information Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          {/* Contact Information */}
+          <div className="bg-neutral-700/50 rounded-xl p-5">
+            <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+              <FiUser className="w-4 h-4" />
+              Contact Information
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FiPhone className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm">Phone</span>
+                </div>
+                <span className="text-white text-sm">
+                  {member.number ?? member.parentNum ?? "-----"}
+                </span>
               </div>
-              <span className="text-white text-sm">{member.number}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FiMail className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300 text-sm">Email</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FiMail className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm">Email</span>
+                </div>
+                <span className="text-white text-sm">
+                  {member.email || "Not provided"}
+                </span>
               </div>
-              <span className="text-white text-sm">
-                {member.email || "Not provided"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <MdLocationOn className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300 text-sm">Location</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MdLocationOn className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm">Location</span>
+                </div>
+                <span className="text-white text-sm">Abuja, Nigeria</span>
               </div>
-              <span className="text-white text-sm">Abuja, Nigeria</span>
             </div>
           </div>
-        </div>
 
-        {/* Work Information */}
-        <div className="bg-neutral-700/50 rounded-xl p-5">
-          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <MdWork className="w-4 h-4" />
-            Work Status
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FiUser className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300 text-sm">Role</span>
+          {/* Work Information */}
+          <div className="bg-neutral-700/50 rounded-xl p-5">
+            <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+              <MdWork className="w-4 h-4" />
+              Work Status
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FiUser className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm">Role</span>
+                </div>
+                <span className="text-white text-sm capitalize">
+                  {member.role}
+                </span>
               </div>
-              <span className="text-white text-sm capitalize">
-                {member.role}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <MdWork className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300 text-sm">Team</span>
-              </div>
-              <span className="text-white text-sm capitalize">
-                {member.team} Team
-              </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MdWork className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm">Team</span>
+                </div>
+                <span className="text-white text-sm capitalize">
+                  {member.team ? `${member.team} Team` : "none"}
+                </span>
             </div>
           </div>
         </div>

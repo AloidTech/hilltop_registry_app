@@ -3,12 +3,13 @@ import { BiCalendarEvent } from "react-icons/bi";
 
 import { MdMenu } from "react-icons/md";
 import { CgProfile } from "react-icons/cg";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 
 export function NavBarDeskt() {
   const [pressedButtonId, setPressedButtonId] = useState("1");
+
   return (
     <div className="flex-col justify-items-center h-screen w-12 p-1 bg-neutral-800">
       <button
@@ -46,33 +47,40 @@ export function NavBarDeskt() {
 
 export const NavBarMobile = () => {
   const [pressedButtonId, setPressedButtonId] = useState("");
+   const router = useRouter();
+
+  
+
   return (
     <div className="flex justify-center gap-10 items-center w-full py-1 px-5 bg-neutral-800">
       <div className="flex-col mb-3 mt-1">
-        <Link href={"/"}>
-          <button
-            onClick={() => setPressedButtonId("1")}
-            className={`px-5 py-1 mb-1.5 ${
-              pressedButtonId == "1" ? "bg-neutral-700/60" : "bg-neutral-800"
-            }  hover:bg-neutral-700/60 rounded-4xl`}
-          >
-            <CgProfile size={27} />
-          </button>
-        </Link>
-        <p className="text-sm  text-center"> Chat</p>
+        <button
+          onClick={() => {
+            setPressedButtonId("1");
+            router.push("/");
+          }}
+          className={`px-5 py-1 mb-1.5 ${
+            pressedButtonId == "1" ? "bg-neutral-700/60" : "bg-neutral-800"
+          }  hover:bg-neutral-700/60 rounded-4xl`}
+        >
+          <CgProfile size={27} />
+        </button>
+
+        <p className="text-sm  text-center">Members</p>
       </div>
 
       <div className="flex-col mb-3 mt-1 ">
-        <Link href={"/service_plan"}>
-          <button
-            onClick={() => setPressedButtonId("2")}
-            className={`px-5 py-1 mb-1.5 ${
-              pressedButtonId == "2" ? "bg-neutral-700/60" : "bg-neutral-800"
-            }  hover:bg-neutral-700/60 rounded-4xl`}
-          >
-            <BiCalendarEvent size={27} />
-          </button>
-        </Link>
+        <button
+          onClick={() => {
+            setPressedButtonId("2");
+            router.push("/service_plan");
+          }}
+          className={`px-5 py-1 mb-1.5 ${
+            pressedButtonId == "2" ? "bg-neutral-700/60" : "bg-neutral-800"
+          }  hover:bg-neutral-700/60 rounded-4xl`}
+        >
+          <BiCalendarEvent size={27} />
+        </button>
 
         <p className="text-sm text-center"> Service Plan</p>
       </div>
