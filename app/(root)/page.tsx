@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { div } from "framer-motion/client";
 
 export interface Member {
   id: string;
@@ -25,6 +26,7 @@ export default function Home() {
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [Members, setMembers] = useState<Member[]>([]);
+  const [emptySearch, setEmptySearch] = useState(false);
 
   useEffect(() => {
     async function fetchMembers() {
@@ -56,7 +58,11 @@ export default function Home() {
       const filtered = Members.filter((member) =>
         member.name.toLowerCase().includes(param.toLowerCase())
       );
+      if (filtered.length == 0) {
+        setEmptySearch(true);
+      }
       setFilteredMembers(filtered);
+      setEmptySearch(false);
     }
   }
 
@@ -166,6 +172,13 @@ export default function Home() {
                     </div>
                   </motion.button>
                 ))}
+                {emptySearch ? (
+                  <div className="text-white z-30 mx-20 font-medium truncate capitalize">
+                    No Such Member
+                  </div>
+                ) : (
+                  <div></div>
+                )}
               </AnimatePresence>
             </motion.div>
           )}
@@ -221,6 +234,7 @@ export default function Home() {
                     </div>
                   </motion.button>
                 ))}
+                {emptySearch ? <div>No Such Member</div> : <div></div>}
               </AnimatePresence>
             </motion.div>
           )}
