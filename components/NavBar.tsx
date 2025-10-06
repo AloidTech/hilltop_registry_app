@@ -47,42 +47,38 @@ export function NavBarDeskt() {
 
 export const NavBarMobile = () => {
   const [pressedButtonId, setPressedButtonId] = useState("");
-   const router = useRouter();
-
-  
+  const router = useRouter();
 
   return (
-    <div className="flex justify-center gap-10 items-center w-full py-1 px-5 bg-neutral-800">
-      <div className="flex-col mb-3 mt-1">
+    <div className="flex justify-center gap-10 items-center w-full py-2 px-5 bg-neutral-800 border-t border-neutral-700/50">
+      <div className="flex-col mb-2 mt-1">
         <button
           onClick={() => {
             setPressedButtonId("1");
             router.push("/");
           }}
-          className={`px-5 py-1 mb-1.5 ${
+          className={`px-5 py-2 mb-1.5 ${
             pressedButtonId == "1" ? "bg-neutral-700/60" : "bg-neutral-800"
-          }  hover:bg-neutral-700/60 rounded-4xl`}
+          } hover:bg-neutral-700/60 rounded-xl`}
         >
-          <CgProfile size={27} />
+          <CgProfile size={24} />
         </button>
-
-        <p className="text-sm  text-center">Members</p>
+        <p className="text-xs text-center text-gray-400">Members</p>
       </div>
 
-      <div className="flex-col mb-3 mt-1 ">
+      <div className="flex-col mb-2 mt-1">
         <button
           onClick={() => {
             setPressedButtonId("2");
             router.push("/service_plan");
           }}
-          className={`px-5 py-1 mb-1.5 ${
+          className={`px-5 py-2 mb-1.5 ${
             pressedButtonId == "2" ? "bg-neutral-700/60" : "bg-neutral-800"
-          }  hover:bg-neutral-700/60 rounded-4xl`}
+          } hover:bg-neutral-700/60 rounded-xl`}
         >
-          <BiCalendarEvent size={27} />
+          <BiCalendarEvent size={24} />
         </button>
-
-        <p className="text-sm text-center"> Service Plan</p>
+        <p className="text-xs text-center text-gray-400">Service Plan</p>
       </div>
     </div>
   );

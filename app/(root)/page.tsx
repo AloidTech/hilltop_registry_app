@@ -24,13 +24,12 @@ export default function Home() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading = true
   const [Members, setMembers] = useState<Member[]>([]);
   const [emptySearch, setEmptySearch] = useState(false);
 
   useEffect(() => {
     async function fetchMembers() {
-      setLoading(true);
       try {
         const response = await fetch("/api/members", {
           next: { revalidate: 60 },
@@ -38,8 +37,10 @@ export default function Home() {
         if (response.ok) {
           const data = await response.json();
           console.log(data);
-          setMembers(data.members);
-          setFilteredMembers(data.members);
+          // Updated to use data.data instead of data.members for server cache compatibility
+          const membersData = data.data || data.members || [];
+          setMembers(membersData);
+          setFilteredMembers(membersData);
         }
       } catch (error) {
         console.error("Failed to fetch members:", error);
@@ -76,9 +77,12 @@ export default function Home() {
             <div className="text-xl">Members</div>
             {/* Header Icons */}
             <div className="flex gap-2">
-              <button className="rounded-full p-2 hover:bg-neutral-700">
+              <a
+                href="https://docs.google.com/forms/d/e/1FAIpQLSeEg0bgljWJL1ayUC9hNQUqwDu5_96Aiag27_ZO0TGuZhQUrQ/viewform"
+                className="rounded-full p-2 hover:bg-neutral-700"
+              >
                 <FaUserPlus className="w-5 h-5" />
-              </button>
+              </a>
               <button className="rounded-full p-2 hover:bg-neutral-700">
                 <BiFilterAlt className="w-5 h-5" />
               </button>
@@ -107,19 +111,42 @@ export default function Home() {
 
           {/* Loading State */}
           {loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-8 space-y-4"
-            >
+            <div className="relative">
+              {/* Ring Loading Spinner */}
               <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="absolute inset-0 flex flex-col items-center justify-center py-8 space-y-4 z-10"
               >
-                <FaSpinner className="w-6 h-6 text-blue-500" />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                >
+                  <FaSpinner className="w-6 h-6 text-blue-500" />
+                </motion.div>
+                <p className="text-gray-400 text-sm">Loading members...</p>
               </motion.div>
-              <p className="text-gray-400 text-sm">Loading members...</p>
-            </motion.div>
+
+              {/* Faded Skeleton Members List */}
+              <div className="md:hidden -mx-2.5 flex-2 overflow-hidden space-y-2 opacity-40">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <div
+                    key={i}
+                    className="flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full"
+                  >
+                    <div className="h-12 w-12 rounded-full bg-neutral-600/50 animate-pulse"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-neutral-600/50 rounded animate-pulse w-3/4"></div>
+                      <div className="h-3 bg-neutral-600/30 rounded animate-pulse w-1/2"></div>
+                    </div>
+                    <div className="flex flex-col items-end space-y-1">
+                      <div className="h-3 bg-neutral-600/40 rounded animate-pulse w-16"></div>
+                      <div className="h-3 bg-neutral-600/30 rounded animate-pulse w-12"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Member Item Mobile*/}
@@ -131,47 +158,48 @@ export default function Home() {
               className="md:hidden -mx-2.5 flex-2 overflow-y-auto space-y-2"
             >
               <AnimatePresence>
-                {filteredMembers.map((member, index) => (
-                  <motion.button
-                    key={member.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => {
-                      setSelectedMember(member);
-                      router.push(`/member_info/${member.id}`);
-                    }}
-                    className="flex gap-4 h-18 px-2 py-1 items-center rounded-md focus:bg-neutral-700 hover:bg-neutral-700 mb-0.5 w-full transition-colors"
-                  >
-                    <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
-                      {/* Profile Image */}
-                      <Image
-                        src={"/iron rank1.png"}
-                        width={40}
-                        height={40}
-                        alt="Profile Picture"
-                        className="rounded-4xl"
-                      />
-                    </div>
-
-                    {/* Member Info */}
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="flex justify-between">
-                        <h3 className="text-white font-medium truncate capitalize">
-                          {member.name}
-                        </h3>
-                        <h3 className="text-gray-300 text-sm truncate">
-                          {member.number ?? member.parentNum ?? "-----"}
-                        </h3>
+                {filteredMembers &&
+                  filteredMembers.map((member, index) => (
+                    <motion.button
+                      key={member.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => {
+                        setSelectedMember(member);
+                        router.push(`/member_info/${member.id}`);
+                      }}
+                      className="flex gap-4 h-18 px-2 py-1 items-center rounded-md focus:bg-neutral-700 hover:bg-neutral-700 mb-0.5 w-full transition-colors"
+                    >
+                      <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
+                        {/* Profile Image */}
+                        <Image
+                          src={"/iron rank1.png"}
+                          width={40}
+                          height={40}
+                          alt="Profile Picture"
+                          className="rounded-4xl"
+                        />
                       </div>
 
-                      <p className="text-gray-400 text-sm truncate">
-                        {member.role ?? "member"} - {member.team ?? "none"}
-                      </p>
-                    </div>
-                  </motion.button>
-                ))}
+                      {/* Member Info */}
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex justify-between">
+                          <h3 className="text-white font-medium truncate capitalize">
+                            {member.name}
+                          </h3>
+                          <h3 className="text-gray-300 text-sm truncate">
+                            {member.number ?? member.parentNum ?? "-----"}
+                          </h3>
+                        </div>
+
+                        <p className="text-gray-400 text-sm truncate">
+                          {member.role ?? "member"} - {member.team ?? "none"}
+                        </p>
+                      </div>
+                    </motion.button>
+                  ))}
                 {emptySearch ? (
                   <div className="text-white z-30 mx-20 font-medium truncate capitalize">
                     No Such Member
@@ -192,48 +220,49 @@ export default function Home() {
               className="hidden md:block flex-2 -mx-2.5 overflow-y-auto space-y-2"
             >
               <AnimatePresence>
-                {filteredMembers.map((member, index) => (
-                  <motion.button
-                    key={member.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => setSelectedMember(member)}
-                    className={`flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-colors ${
-                      selectedMember?.id === member.id
-                        ? "bg-neutral-600"
-                        : "hover:bg-neutral-700"
-                    }`}
-                  >
-                    <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
-                      {/* Profile Image */}
-                      <Image
-                        src={"/iron rank1.png"}
-                        width={40}
-                        height={40}
-                        alt="Profile Picture"
-                        className="rounded-4xl"
-                      />
-                    </div>
-
-                    {/* Member Info */}
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="flex justify-between gap-4">
-                        <h3 className="text-white font-medium truncate capitalize">
-                          {member.name}
-                        </h3>
-                        <h3 className="text-gray-300 text-sm ">
-                          {member.number ?? member.parentNum ?? "-----"}
-                        </h3>
+                {filteredMembers &&
+                  filteredMembers.map((member, index) => (
+                    <motion.button
+                      key={member.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => setSelectedMember(member)}
+                      className={`flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-colors ${
+                        selectedMember?.id === member.id
+                          ? "bg-neutral-600"
+                          : "hover:bg-neutral-700"
+                      }`}
+                    >
+                      <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
+                        {/* Profile Image */}
+                        <Image
+                          src={"/iron rank1.png"}
+                          width={40}
+                          height={40}
+                          alt="Profile Picture"
+                          className="rounded-4xl"
+                        />
                       </div>
 
-                      <p className="text-gray-400 text-sm truncate">
-                        {member.role ?? "member"} - {member.team ?? "none"}
-                      </p>
-                    </div>
-                  </motion.button>
-                ))}
+                      {/* Member Info */}
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex justify-between gap-4">
+                          <h3 className="text-white font-medium truncate capitalize">
+                            {member.name}
+                          </h3>
+                          <h3 className="text-gray-300 text-sm ">
+                            {member.number ?? member.parentNum ?? "-----"}
+                          </h3>
+                        </div>
+
+                        <p className="text-gray-400 text-sm truncate">
+                          {member.role ?? "member"} - {member.team ?? "none"}
+                        </p>
+                      </div>
+                    </motion.button>
+                  ))}
                 {emptySearch ? <div>No Such Member</div> : <div></div>}
               </AnimatePresence>
             </motion.div>

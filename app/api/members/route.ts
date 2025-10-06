@@ -1,10 +1,25 @@
 import { google } from "googleapis";
 import { GoogleAuth, JWT } from "google-auth-library";
 import { NextResponse } from "next/server";
+import { serverCache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
 export async function GET() {
-  console.log("🚀 API route called");
+  console.log("🚀 Members API route called");
+
   try {
+    // Check server cache first
+    const cachedMembers = serverCache.get(CACHE_KEYS.ALL_MEMBERS);
+    if (cachedMembers) {
+      console.log("✅ Returning cached members data");
+      return NextResponse.json({
+        data: cachedMembers,
+        source: "cache",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log("📡 Fetching fresh members data from Google Sheets");
+
     // Get spreadsheet ID from environment variables
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
@@ -19,8 +34,6 @@ export async function GET() {
       process.env.GOOGLE_PRIVATE_KEY_BASE64,
       "base64"
     ).toString("utf8");
-
-    console.log("📊 Spreadsheet private key", private_key);
 
     const auth = new JWT({
       email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -54,7 +67,15 @@ export async function GET() {
         team: row[6] || null, // ✅ Correct: fifth column
       })) || [];
 
-    return NextResponse.json({ members });
+    // Cache the members data
+    serverCache.set(CACHE_KEYS.ALL_MEMBERS, members, CACHE_TTL.MEMBERS);
+    console.log("💾 Members data cached for", CACHE_TTL.MEMBERS, "seconds");
+
+    return NextResponse.json({
+      data: members,
+      source: "fresh",
+      timestamp: new Date().toISOString(),
+    });
   } catch (e) {
     console.error("Error fetching members: ", e);
     return NextResponse.json(
