@@ -7,14 +7,24 @@ export async function GET() {
   try {
     // Get spreadsheet ID from environment variables
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
+      throw new Error(
+        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set"
+      );
+    }
     if (!spreadsheetId) {
       throw new Error("GOOGLE_SPREADSHEET_ID environment variable is not set");
     }
-    console.log("📊 Spreadsheet ID:", spreadsheetId);
+    const private_key = Buffer.from(
+      process.env.GOOGLE_PRIVATE_KEY_BASE64,
+      "base64"
+    ).toString("utf8");
+
+    console.log("📊 Spreadsheet private key", private_key);
 
     const auth = new JWT({
       email: process.env.GOOGLE_CLIENT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      key: private_key?.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     }); /*
     const auth = new google.auth.GoogleAuth({
@@ -44,14 +54,12 @@ export async function GET() {
         team: row[6] || null, // ✅ Correct: fifth column
       })) || [];
 
-    return NextResponse.json(
-      { members }
-    );
+    return NextResponse.json({ members });
   } catch (e) {
     console.error("Error fetching members: ", e);
     return NextResponse.json(
       { error: "Failed to fetch members" },
-      { status: 510 }
+      { status: 500 }
     );
   }
 }

@@ -219,11 +219,11 @@ export default function Home() {
 
                     {/* Member Info */}
                     <div className="flex-1 min-w-0 text-left">
-                      <div className="flex justify-between">
+                      <div className="flex justify-between gap-4">
                         <h3 className="text-white font-medium truncate capitalize">
                           {member.name}
                         </h3>
-                        <h3 className="text-gray-300 text-sm truncate">
+                        <h3 className="text-gray-300 text-sm ">
                           {member.number ?? member.parentNum ?? "-----"}
                         </h3>
                       </div>
