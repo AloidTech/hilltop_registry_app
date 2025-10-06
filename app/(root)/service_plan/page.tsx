@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BsClock,
@@ -7,8 +7,8 @@ import {
   BsPlus,
   BsThreeDotsVertical,
 } from "react-icons/bs";
-import { FiUser, FiCalendar, FiEdit3, FiEye, FiDownload } from "react-icons/fi";
-import { MdLocationOn, MdExpandMore, MdExpandLess } from "react-icons/md";
+import { FiUser, FiCalendar, FiEdit3, FiDownload } from "react-icons/fi";
+import { MdExpandMore } from "react-icons/md";
 
 export interface ServicePlanProp {
   id: string;
@@ -22,13 +22,10 @@ export interface ServicePlanData {
 }
 
 function ServicePlanPage() {
-  const [isAtBottom, setIsAtBotttom] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const [plansLoading, setPlansLoading] = useState(true);
   const [ServicePlans, setServicePlans] = useState<ServicePlanData>({});
   const servicePlanDates = Object.keys(ServicePlans);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<string>("");
 
   useEffect(() => {
     const fetchServicePlans = async () => {
@@ -43,7 +40,6 @@ function ServicePlanPage() {
           const dates = Object.keys(data.data || {});
           if (dates.length > 0) {
             setExpandedPlan(dates[0]);
-            setSelectedPlan(dates[0]);
           }
         } else {
           console.error("Failed to fetch service plans");

@@ -6,7 +6,7 @@ interface CacheItem<T> {
 }
 
 class InMemoryCache {
-  private cache = new Map<string, CacheItem<any>>();
+  private cache = new Map<string, CacheItem<unknown>>();
 
   set<T>(key: string, data: T, ttlSeconds: number = 300): void {
     const now = Date.now();
@@ -19,19 +19,17 @@ class InMemoryCache {
 
   get<T>(key: string): T | null {
     const item = this.cache.get(key);
-
+    
     if (!item) return null;
-
+    
     // Check if expired
     if (Date.now() > item.expiry) {
       this.cache.delete(key);
       return null;
     }
-
-    return item.data;
-  }
-
-  delete(key: string): void {
+    
+    return item.data as T;
+  }  delete(key: string): void {
     this.cache.delete(key);
   }
 

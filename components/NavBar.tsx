@@ -3,8 +3,7 @@ import { BiCalendarEvent } from "react-icons/bi";
 
 import { MdMenu } from "react-icons/md";
 import { CgProfile } from "react-icons/cg";
-import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { redirect, useRouter } from "next/navigation";
 
 export function NavBarDeskt() {

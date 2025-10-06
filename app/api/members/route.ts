@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { GoogleAuth, JWT } from "google-auth-library";
+import { JWT } from "google-auth-library";
 import { NextResponse } from "next/server";
 import { serverCache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 

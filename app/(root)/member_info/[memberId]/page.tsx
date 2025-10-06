@@ -8,7 +8,6 @@ import { FaSpinner } from "react-icons/fa";
 
 function MemberInfo() {
   const [loading, setLoading] = useState(true); // Start with loading = true
-  const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const { memberId } = useParams();
   useEffect(() => {
@@ -22,7 +21,6 @@ function MemberInfo() {
           console.log(data);
           // Updated to use data.data for server cache compatibility
           const membersData = data.data || data.members || [];
-          setMembers(membersData);
 
           // Find the selected member
           const foundMember = membersData.find(

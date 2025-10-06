@@ -1,8 +1,14 @@
 import { google } from "googleapis";
-import { GoogleAuth, JWT } from "google-auth-library";
+import { JWT } from "google-auth-library";
 import { NextRequest, NextResponse } from "next/server";
-import { ServicePlanData } from "../../(root)/service_plan/page";
 import { serverCache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
+
+interface ServicePlanProp {
+  id: string;
+  TimePeriod: string;
+  Program: string;
+  Anchors: Array<string>;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    const addSheet = await sheets.spreadsheets.batchUpdate({
+    await sheets.spreadsheets.batchUpdate({
       spreadsheetId,
       requestBody: {
         requests: [
@@ -151,7 +157,7 @@ export async function GET() {
       ranges: sheetsToGet,
     });
 
-    const ServicePlans: { [key: string]: any } = {};
+    const ServicePlans: { [key: string]: ServicePlanProp[] } = {};
 
     response?.data?.valueRanges?.forEach((range) => {
       const date = range?.range?.split("!")[0]?.replace(/'/g, "") || "";

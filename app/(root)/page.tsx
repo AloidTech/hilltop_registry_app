@@ -7,7 +7,6 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { div } from "framer-motion/client";
 
 export interface Member {
   id: string;

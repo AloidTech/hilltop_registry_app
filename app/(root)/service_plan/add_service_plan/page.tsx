@@ -1,9 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BsClock, BsPlus, BsTrash, BsCalendarCheck } from "react-icons/bs";
-import { FiUser, FiCalendar, FiSave, FiArrowLeft } from "react-icons/fi";
-import { MdLocationOn } from "react-icons/md";
+import { BsClock, BsPlus, BsTrash } from "react-icons/bs";
+import { FiSave, FiArrowLeft, FiCalendar } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 
 interface Member {
@@ -118,7 +117,7 @@ function AddServicePlanPage() {
   const updateProgram = (
     index: number,
     field: keyof ServicePlanProgram,
-    value: any
+    value: string | string[]
   ) => {
     const updatedPrograms = [...formData.programs];
     updatedPrograms[index] = { ...updatedPrograms[index], [field]: value };
