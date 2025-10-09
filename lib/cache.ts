@@ -19,17 +19,18 @@ class InMemoryCache {
 
   get<T>(key: string): T | null {
     const item = this.cache.get(key);
-    
+
     if (!item) return null;
-    
+
     // Check if expired
     if (Date.now() > item.expiry) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return item.data as T;
-  }  delete(key: string): void {
+  }
+  delete(key: string): void {
     this.cache.delete(key);
   }
 

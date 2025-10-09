@@ -90,16 +90,40 @@ function ServicePlanPage() {
     return (
       <div className="flex-1 pb-28 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-auto">
         {/* Header Skeleton */}
-        <div className="flex justify-between -mx-6 items-center px-8 py-4 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
-          <div className="space-y-2">
-            <div className="h-6 bg-neutral-600/50 rounded-lg animate-pulse w-32"></div>
-            <div className="h-4 bg-neutral-600/30 rounded-lg animate-pulse w-48"></div>
+        <motion.div className="flex justify-between -mx-6 items-center px-8 py-4 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
+          <div>
+            <h1 className="text-white text-xl md:text-2xl font-bold">
+              Service Plans
+            </h1>
+            <p className="text-gray-400 text-xs md:text-sm mt-1">
+              Manage and view worship service schedules
+            </p>
           </div>
-          <div className="flex gap-4">
-            <div className="h-8 bg-neutral-600/50 rounded-lg animate-pulse w-16"></div>
-            <div className="h-8 bg-neutral-600/50 rounded-lg animate-pulse w-24"></div>
+          <div className="flex gap-2 md:gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <a
+                href="/service_plan/add_service_plan"
+                className="flex items-center gap-1 md:gap-2"
+              >
+                <BsPlus className="w-5 h-5 md:w-4 md:h-4" />
+                <div className="hidden sm:block text-sm md:text-base">
+                  New Plan
+                </div>
+              </a>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 bg-neutral-600 hover:bg-neutral-500 text-white rounded-lg transition-colors"
+            >
+              <BsThreeDotsVertical className="w-4 h-4" />
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -160,8 +184,7 @@ function ServicePlanPage() {
     <div className="flex-1 pb-28 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-auto">
       {/* Enhanced Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+      
         className="flex justify-between -mx-6 items-center px-8 py-4 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50"
       >
         <div>
@@ -317,7 +340,6 @@ function ServicePlanPage() {
                     {getStatusText(index)}
                   </span>
 
-                  {/* Action Buttons - Remove Eye Icon */}
                   <div className="flex gap-1 md:gap-2">
                     <motion.button
                       whileHover={{ scale: 1.1 }}

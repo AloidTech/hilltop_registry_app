@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BsClock, BsPlus, BsTrash } from "react-icons/bs";
+import { BsChevronDown, BsClock, BsPlus, BsTrash } from "react-icons/bs";
 import { FiSave, FiArrowLeft, FiCalendar } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 
@@ -52,7 +52,148 @@ const timeOptions = [
   "8:50am",
   "8:55am",
   "9:00am",
+  "9:05am",
+  "9:10am",
+  "9:15am",
+  "9:20am",
+  "9:25am",
+  "9:30am",
+  "9:35am",
+  "9:40am",
+  "9:45am",
+  "9:50am",
+  "9:55am",
+  "10:00am",
+  "10:05am",
+  "10:10am",
+  "10:15am",
+  "10:20am",
+  "10:25am",
+  "10:30am",
+  "10:35am",
+  "10:40am",
+  "10:45am",
+  "10:50am",
+  "10:55am",
+  "11:00am",
+  "11:05am",
+  "11:10am",
+  "11:15am",
+  "11:20am",
+  "11:25am",
+  "11:30am",
+  "11:35am",
+  "11:40am",
+  "11:45am",
+  "11:50am",
+  "11:55am",
+  "12:00pm",
+  "12:05pm",
+  "12:10pm",
+  "12:15pm",
+  "12:20pm",
+  "12:25pm",
+  "12:30pm",
 ];
+
+// Custom Time Picker Component
+interface TimePickerProps {
+  value: string;
+  onChange: (time: string) => void;
+  placeholder?: string;
+}
+
+const CustomTimePicker: React.FC<TimePickerProps> = ({
+  value,
+  onChange,
+  placeholder = "Select time",
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredOptions = timeOptions.filter((time) =>
+    time.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelect = (time: string) => {
+    onChange(time);
+    setIsOpen(false);
+    setSearchTerm("");
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-2 bg-neutral-600 border border-neutral-500 rounded text-white focus:border-blue-500 focus:outline-none flex items-center justify-between hover:bg-neutral-550 transition-colors"
+      >
+        <span className={value ? "text-white" : "text-gray-400"}>
+          {value || placeholder}
+        </span>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <BsChevronDown className="w-4 h-4 text-gray-400" />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full left-0 right-0 z-50 mt-1 bg-neutral-700 border border-neutral-600 rounded-lg shadow-xl max-h-60 overflow-hidden"
+          >
+            {/* Search Input */}
+            <div className="p-2 border-b border-neutral-600">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search time..."
+                className="w-full p-2 bg-neutral-600 border border-neutral-500 rounded text-white text-sm focus:border-blue-500 focus:outline-none"
+                autoFocus
+              />
+            </div>
+
+            {/* Time Options */}
+            <div className="overflow-y-auto max-h-48">
+              {filteredOptions.length > 0 ? (
+                filteredOptions.map((time) => (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() => handleSelect(time)}
+                    className={`w-full p-2 text-left hover:bg-neutral-600 transition-colors text-sm ${
+                      value === time
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-200 hover:text-white"
+                    }`}
+                  >
+                    {time}
+                  </button>
+                ))
+              ) : (
+                <div className="p-4 text-center text-gray-400 text-sm">
+                  No times found
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Click outside to close */}
+      {isOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+      )}
+    </div>
+  );
+};
 
 function AddServicePlanPage() {
   const router = useRouter();
@@ -94,12 +235,16 @@ function AddServicePlanPage() {
   }, []);
 
   const addProgram = () => {
+    const lastProgram = formData.programs.at(-1);
+    const endTime = lastProgram?.TimePeriod.split("~")[1] || "7:05";
+    const newStartTime = endTime;
+    const newEndTime = getNextEndTime(endTime);
     setFormData({
       ...formData,
       programs: [
         ...formData.programs,
         {
-          TimePeriod: "7:00am ~ 7:05am",
+          TimePeriod: `${newStartTime} ~ ${newEndTime}`,
           Program: "",
           Anchors: [],
         },
@@ -113,6 +258,16 @@ function AddServicePlanPage() {
       programs: formData.programs.filter((_, i) => i !== index),
     });
   };
+
+  const getNextEndTime = (currentTime: string) => {
+    const minute = currentTime.split(":")[1];
+    const hour = currentTime.split(":")[0];
+    const intMinute = parseInt(minute, 10);
+    const newEndTime = `${hour}:${intMinute + 5}`;
+    return newEndTime;
+  };
+
+  const calculateTotalTime = () => {};
 
   const updateProgram = (
     index: number,
@@ -190,16 +345,56 @@ function AddServicePlanPage() {
     return (
       <div className="flex-1 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-auto">
         {/* Header Skeleton */}
-        <div className="sticky top-0 z-10 flex justify-between -mx-6 items-center px-6 py-2 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
+        <motion.div className="sticky top-0 z-10 flex justify-between -mx-6 items-center px-6 py-2 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
           <div className="flex items-center gap-4">
-            <div className="h-8 w-8 bg-neutral-600/50 rounded-lg animate-pulse"></div>
-            <div className="space-y-1">
-              <div className="h-4 bg-neutral-600/50 rounded animate-pulse w-32"></div>
-              <div className="h-3 bg-neutral-600/30 rounded animate-pulse w-48"></div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.back()}
+              className="p-2 bg-neutral-600 hover:bg-neutral-500 text-white rounded-lg transition-colors"
+            >
+              <FiArrowLeft className="w-4 h-4" />
+            </motion.button>
+            <div>
+              <h1 className="text-white text-lg font-bold">Add Service Plan</h1>
+              <p className="text-gray-400 text-xs">
+                Create a new worship service schedule
+              </p>
             </div>
           </div>
-          <div className="h-8 bg-neutral-600/50 rounded-lg animate-pulse w-20"></div>
-        </div>
+
+          {/* Save Button in Header */}
+          <div className="flex gap-3">
+            <motion.button
+              type="submit"
+              form="service-plan-form"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+            >
+              {loading ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                  />
+                  <span className="hidden md:inline">Saving...</span>
+                </>
+              ) : (
+                <>
+                  <FiSave className="w-4 h-4" />
+                  <span className="hidden md:inline">Save Plan</span>
+                </>
+              )}
+            </motion.button>
+          </div>
+        </motion.div>
 
         {/* Form Skeleton */}
         <div className="space-y-6 pb-24">
@@ -248,11 +443,7 @@ function AddServicePlanPage() {
   return (
     <div className="flex-1 px-6 bg-neutral-800/50 h-screen overflow-y-auto">
       {/* Compact Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-10 flex justify-between -mx-6 items-center px-6 py-2 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50"
-      >
+      <motion.div className="sticky top-0 z-10 flex justify-between -mx-6 items-center px-6 py-2 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
         <div className="flex items-center gap-4">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -374,37 +565,31 @@ function AddServicePlanPage() {
                         Time Period
                       </label>
                       <div className="flex items-center gap-2">
-                        <select
-                          value={program.TimePeriod.split(" ~ ")[0]}
-                          onChange={(e) => {
-                            const endTime =
-                              program.TimePeriod.split(" ~ ")[1] || "7:05am";
-                            updateTimePeriod(index, e.target.value, endTime);
-                          }}
-                          className="flex-1 p-2 bg-neutral-600 border border-neutral-500 rounded text-white focus:border-blue-500 focus:outline-none"
-                        >
-                          {timeOptions.map((time) => (
-                            <option key={time} value={time}>
-                              {time}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="text-gray-400">~</span>
-                        <select
-                          value={program.TimePeriod.split(" ~ ")[1] || "7:05am"}
-                          onChange={(e) => {
-                            const startTime =
-                              program.TimePeriod.split(" ~ ")[0];
-                            updateTimePeriod(index, startTime, e.target.value);
-                          }}
-                          className="flex-1 p-2 bg-neutral-600 border border-neutral-500 rounded text-white focus:border-blue-500 focus:outline-none"
-                        >
-                          {timeOptions.map((time) => (
-                            <option key={time} value={time}>
-                              {time}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex-1">
+                          <CustomTimePicker
+                            value={program.TimePeriod.split(" ~ ")[0]}
+                            onChange={(time) => {
+                              const endTime =
+                                program.TimePeriod.split(" ~ ")[1] || "7:05am";
+                              updateTimePeriod(index, time, endTime);
+                            }}
+                            placeholder="Start time"
+                          />
+                        </div>
+                        <span className="text-gray-400 font-mono">~</span>
+                        <div className="flex-1">
+                          <CustomTimePicker
+                            value={
+                              program.TimePeriod.split(" ~ ")[1] || "7:05am"
+                            }
+                            onChange={(time) => {
+                              const startTime =
+                                program.TimePeriod.split(" ~ ")[0];
+                              updateTimePeriod(index, startTime, time);
+                            }}
+                            placeholder="End time"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -514,8 +699,8 @@ function AddServicePlanPage() {
                     >
                       <motion.button
                         type="button"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.05 }}
                         onClick={addProgram}
                         className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-neutral-500 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-500/5"
                       >
