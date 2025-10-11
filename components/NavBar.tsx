@@ -1,18 +1,28 @@
 "use client";
 import { BiCalendarEvent } from "react-icons/bi";
-
 import { MdMenu } from "react-icons/md";
 import { CgProfile } from "react-icons/cg";
-import { useState } from "react";
-import { redirect, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
 export function NavBarDeskt() {
   const [pressedButtonId, setPressedButtonId] = useState("1");
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Auto-detect current page and set active button
+  useEffect(() => {
+    if (pathname === "/") {
+      setPressedButtonId("1");
+    } else if (pathname.startsWith("/service_plan")) {
+      setPressedButtonId("2");
+    }
+  }, [pathname]);
 
   return (
     <div className="flex-col justify-items-center h-screen w-12 p-1 bg-neutral-800">
       <button
-        className={`my-3 mx-0 px-2 py-1.5 hover:bg-neutral-700/60  rounded-sm`}
+        className={`my-3 mx-0 px-2 py-1.5 hover:bg-neutral-700/60 rounded-sm`}
       >
         <MdMenu size={23} />
       </button>
@@ -20,11 +30,11 @@ export function NavBarDeskt() {
       <button
         onClick={() => {
           setPressedButtonId("1");
-          redirect("/");
+          router.push("/");
         }}
         className={`mt-3 px-2 py-1.5 ${
           pressedButtonId == "1" ? "bg-neutral-700/60" : "bg-neutral-800"
-        }  hover:bg-neutral-700/60 rounded-sm`}
+        } hover:bg-neutral-700/60 rounded-sm`}
       >
         <CgProfile size={24} />
       </button>
@@ -32,11 +42,11 @@ export function NavBarDeskt() {
       <button
         onClick={() => {
           setPressedButtonId("2");
-          redirect("/service_plan");
+          router.push("/service_plan");
         }}
         className={`my-1 px-2 py-1.5 ${
           pressedButtonId == "2" ? "bg-neutral-700/60" : "bg-neutral-800"
-        }  hover:bg-neutral-700/60 rounded-sm`}
+        } hover:bg-neutral-700/60 rounded-sm`}
       >
         <BiCalendarEvent size={23} />
       </button>
@@ -47,6 +57,16 @@ export function NavBarDeskt() {
 export const NavBarMobile = () => {
   const [pressedButtonId, setPressedButtonId] = useState("");
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Auto-detect current page and set active button
+  useEffect(() => {
+    if (pathname === "/") {
+      setPressedButtonId("1");
+    } else if (pathname.startsWith("/service_plan")) {
+      setPressedButtonId("2");
+    }
+  }, [pathname]);
 
   return (
     <div className="flex justify-center gap-10 items-center w-full py-2 px-5 bg-neutral-800 border-t border-neutral-700/50">

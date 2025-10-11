@@ -200,6 +200,7 @@ function AddServicePlanPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [membersLoading, setMembersLoading] = useState(true);
+  const [anchorSearchTerm, setAnchorSearchTerm] = useState("");
 
   const [formData, setFormData] = useState<ServicePlanForm>({
     date: "",
@@ -297,6 +298,11 @@ function AddServicePlanPage() {
 
     updateProgram(programIndex, "Anchors", newAnchors);
   };
+
+  // Filter members based on search term
+  const filteredMembers = members.filter((member) =>
+    member.name.toLowerCase().includes(anchorSearchTerm.toLowerCase())
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -653,7 +659,20 @@ function AddServicePlanPage() {
                     ) : (
                       <div className="max-h-32 overflow-y-auto border border-neutral-600 rounded-lg p-2 bg-neutral-700/30">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {members.map((member) => (
+                          {/* Search Bar as First Item */}
+                          <div className="mb-2">
+                            <input
+                              type="text"
+                              value={anchorSearchTerm}
+                              onChange={(e) =>
+                                setAnchorSearchTerm(e.target.value)
+                              }
+                              placeholder="Search members..."
+                              className="w-full p-2 bg-neutral-600 border border-neutral-500 rounded text-white text-sm focus:border-blue-500 focus:outline-none"
+                            />
+                          </div>
+
+                          {filteredMembers.map((member) => (
                             <label
                               key={member.id}
                               className="flex items-center gap-2 p-2 hover:bg-neutral-600/30 rounded cursor-pointer"
@@ -666,7 +685,7 @@ function AddServicePlanPage() {
                                 }
                                 className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
                               />
-                              <span className="text-white text-sm">
+                              <span className="text-white capitalize text-sm">
                                 {member.name}
                               </span>
                             </label>

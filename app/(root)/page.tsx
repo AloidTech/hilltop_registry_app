@@ -12,8 +12,14 @@ export interface Member {
   id: string;
   name: string;
   number?: string;
-  parentNum?: string;
+  maleGNum?: string;
+  maleGName: string;
+  femaleGName: string;
+  femaleGNum?: string;
+  houseAddress: string;
+  birthDay: string;
   email?: string;
+  sex?: string;
   role?: string;
   team?: string;
 }
@@ -23,7 +29,7 @@ export default function Home() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true); // Start with loading = true
+  const [loading, setLoading] = useState(true);
   const [Members, setMembers] = useState<Member[]>([]);
   const [emptySearch, setEmptySearch] = useState(false);
 
@@ -36,14 +42,12 @@ export default function Home() {
         if (response.ok) {
           const data = await response.json();
           console.log(data);
-          // Updated to use data.data instead of data.members for server cache compatibility
           const membersData = data.data || data.members || [];
           setMembers(membersData);
           setFilteredMembers(membersData);
         }
       } catch (error) {
         console.error("Failed to fetch members:", error);
-        // Keep using fallback data
       } finally {
         setLoading(false);
       }
@@ -66,6 +70,17 @@ export default function Home() {
     }
   }
 
+  const handleMemberClick = (member: Member, type: string) => {
+    if (type == "d") {
+      // Desktop: Just set selected member for details panel
+      setSelectedMember(member);
+    } else if (type == "m") {
+      // Mobile: Navigate to member info page
+      setSelectedMember(member);
+      router.push(`/member_info/${member.id}`);
+    }
+  };
+
   return (
     <div className="z-0 md:flex font-sans bg-neutral-800">
       <div className="flex h-screen w-full bg-[rgb(45,46,45)] justify-between md:rounded-tl-md">
@@ -74,6 +89,7 @@ export default function Home() {
           {/* Header */}
           <header className="flex justify-between items-center w-full h-8 mb-3">
             <div className="text-xl">Members</div>
+
             {/* Header Icons */}
             <div className="flex gap-2">
               <a
@@ -87,6 +103,7 @@ export default function Home() {
               </button>
             </div>
           </header>
+
           {/* Search Bar */}
           <div className="relative mb-4">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -165,14 +182,10 @@ export default function Home() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ delay: index * 0.05 }}
-                      onClick={() => {
-                        setSelectedMember(member);
-                        router.push(`/member_info/${member.id}`);
-                      }}
-                      className="flex gap-4 h-18 px-2 py-1 items-center rounded-md focus:bg-neutral-700 hover:bg-neutral-700 mb-0.5 w-full transition-colors"
+                      onClick={() => handleMemberClick(member, "m")}
+                      className="flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-all duration-200 focus:bg-neutral-700 hover:bg-neutral-700"
                     >
                       <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
-                        {/* Profile Image */}
                         <Image
                           src={"/iron rank1.png"}
                           width={40}
@@ -182,17 +195,18 @@ export default function Home() {
                         />
                       </div>
 
-                      {/* Member Info */}
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex justify-between">
                           <h3 className="text-white font-medium truncate capitalize">
                             {member.name}
                           </h3>
                           <h3 className="text-gray-300 text-sm truncate">
-                            {member.number ?? member.parentNum ?? "-----"}
+                            {member.number ??
+                              member.maleGNum ??
+                              member.femaleGNum ??
+                              "-----"}
                           </h3>
                         </div>
-
                         <p className="text-gray-400 text-sm truncate">
                           {member.role ?? "member"} - {member.team ?? "none"}
                         </p>
@@ -227,15 +241,14 @@ export default function Home() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ delay: index * 0.05 }}
-                      onClick={() => setSelectedMember(member)}
-                      className={`flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-colors ${
+                      onClick={() => handleMemberClick(member, "d")}
+                      className={`flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-all duration-200 ${
                         selectedMember?.id === member.id
                           ? "bg-neutral-600"
                           : "hover:bg-neutral-700"
                       }`}
                     >
                       <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
-                        {/* Profile Image */}
                         <Image
                           src={"/iron rank1.png"}
                           width={40}
@@ -245,17 +258,18 @@ export default function Home() {
                         />
                       </div>
 
-                      {/* Member Info */}
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex justify-between gap-4">
                           <h3 className="text-white font-medium truncate capitalize">
                             {member.name}
                           </h3>
                           <h3 className="text-gray-300 text-sm ">
-                            {member.number ?? member.parentNum ?? "-----"}
+                            {member.number ??
+                              member.maleGNum ??
+                              member.femaleGNum ??
+                              "-----"}
                           </h3>
                         </div>
-
                         <p className="text-gray-400 text-sm truncate">
                           {member.role ?? "member"} - {member.team ?? "none"}
                         </p>
