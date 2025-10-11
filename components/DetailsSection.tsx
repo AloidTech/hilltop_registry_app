@@ -136,28 +136,6 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ member }) => {
     );
   }
 
-  const formatGuardianInfo = (name: string | null, number: string | null) => {
-    if (!name && !number) return "Not provided";
-    if (name && number) return `${name} - ${number}`;
-    if (name) return name;
-    if (number) return number;
-    return "Not provided";
-  };
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "Not provided";
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr; // Return as-is if not a valid date
-    }
-  };
-
   return (
     <div className="flex-1 p-6 hidden md:block bg-neutral-800/30 overflow-y-auto">
       <motion.div
@@ -448,28 +426,6 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
       </div>
     );
   }
-
-  const formatGuardianInfo = (name: string | null, number: string | null) => {
-    if (!name && !number) return "Not provided";
-    if (name && number) return `${name} - ${number}`;
-    if (name) return name;
-    if (number) return number;
-    return "Not provided";
-  };
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "Not provided";
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
 
   return (
     <motion.div

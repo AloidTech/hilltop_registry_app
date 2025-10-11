@@ -40,12 +40,12 @@ export async function DELETE(request: NextRequest) {
     const rows = (await response).data.values || [];
     const dataRows = rows.slice(1);
 
-    const findRowIndex = (searchValue: any, columnIndex: number) => {
+    const findRowIndex = (searchValue: string, columnIndex: number) => {
       return dataRows.findIndex((row) => row[columnIndex] === searchValue);
     };
 
     const rowsToDelete: number[] = [];
-    memebers.array.forEach((member: string, index: number) => {
+    memebers.array.forEach((member: string) => {
       const memberIndex = findRowIndex(member, 1);
       if (memberIndex != -1) {
         rowsToDelete.push(memberIndex + 1); //To offset Header slice and base 1 indexing

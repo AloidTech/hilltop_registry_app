@@ -1,10 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Member } from "../page";
 
 function Workers_Page() {
-  const [loading, setLoading] = useState(true); // Start with loading = true
-  const [Members, setMembers] = useState([]);
+  const [, setLoading] = useState(true); // Start with loading = true
+  const [, setMembers] = useState([]);
 
   useEffect(() => {
     async function fetchMembers() {
@@ -17,7 +16,7 @@ function Workers_Page() {
           console.log(data);
           // Updated to use data.data for server cache compatibility
           const membersData = data.data || data.members || [];
-setMembers(membersData);
+          setMembers(membersData);
         }
       } catch (error) {
         console.error("Failed to fetch members:", error);
