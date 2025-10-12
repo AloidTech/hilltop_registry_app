@@ -614,7 +614,9 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
           </div>
         </div>
       </div>
+      
     </motion.div>
+    
   );
 };
 

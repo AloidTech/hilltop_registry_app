@@ -82,7 +82,7 @@ export default function Home() {
   };
 
   return (
-    <div className="z-0 md:flex font-sans bg-neutral-800">
+    <div className="z-0 md:flex font-sans bg-[rgb(45,46,45)]">
       <div className="flex h-screen w-full bg-[rgb(45,46,45)] justify-between md:rounded-tl-md">
         {/* First Section */}
         <div className="flex-col justify-start w-full md:w-1/3 md:border-r-1 p-5 border-[rgb(32,33,32)]">
@@ -284,6 +284,7 @@ export default function Home() {
         {/* Second Section */}
         <DetailsSection member={selectedMember} />
       </div>
+      <div className="mt-35 md:m-0"></div>
     </div>
   );
 }

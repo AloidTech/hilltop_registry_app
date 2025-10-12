@@ -183,10 +183,7 @@ function ServicePlanPage() {
   return (
     <div className="flex-1 pb-28 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-auto">
       {/* Enhanced Header */}
-      <motion.div
-      
-        className="flex justify-between -mx-6 items-center px-8 py-4 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50"
-      >
+      <motion.div className="flex justify-between -mx-6 items-center px-8 py-4 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
         <div>
           <h1 className="text-white text-xl md:text-2xl font-bold">
             Service Plans
@@ -443,6 +440,7 @@ function ServicePlanPage() {
           ))
         )}
       </motion.div>
+      <div className="mt-25 md:m-0"></div>
     </div>
   );
 }
