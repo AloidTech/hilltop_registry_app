@@ -29,9 +29,9 @@ export default function RootLayout({
         className={`relative ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="md:fixed md:block top-0 left-0  h-full hidden z-50">
-          <NavBarDeskt/>
+          <NavBarDeskt />
         </div>
-        <div className="md:ml-12 ml-0">{children}</div>
+        <div className="md:ml-12 md:pb-0 ml-0 pb-18">{children}</div>
 
         <div className="md:hidden fixed bottom-0 left-0 w-full z-50">
           <NavBarMobile />

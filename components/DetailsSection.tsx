@@ -113,7 +113,7 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ member }) => {
 
   if (!member) {
     return (
-      <div className="flex-1 p-10 hidden md:block bg-neutral-800/30">
+      <div className="flex-1 p-10 hidden md:block  bg-neutral-800/30">
         <div className="flex flex-col items-center justify-center h-full text-center">
           <div className="mb-8 p-6 bg-neutral-700/50 rounded-full">
             <Image
@@ -433,7 +433,7 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="flex-1 pb-6 px-4 bg-neutral-800/50 h-full overflow-y-auto"
+      className="flex-1 pb-12 px-4 bg-neutral-800/50 h-full overflow-y-auto"
     >
       {/* Header */}
       <div className="flex justify-between -mx-4 items-center px-4 py-4 mb-6 bg-neutral-800/80 sticky top-0 z-10">

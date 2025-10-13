@@ -83,11 +83,11 @@ export default function Home() {
 
   return (
     <div className="z-0 md:flex font-sans bg-[rgb(45,46,45)]">
-      <div className="flex h-screen w-full bg-[rgb(45,46,45)] justify-between md:rounded-tl-md">
-        {/* First Section */}
-        <div className="flex-col justify-start w-full md:w-1/3 md:border-r-1 p-5 border-[rgb(32,33,32)]">
-          {/* Header */}
-          <header className="flex justify-between items-center w-full h-8 mb-3">
+      <div className="flex h-screen w-full justify-between md:rounded-tl-md">
+        {/* First Section - Add flex column and height constraint */}
+        <div className="flex flex-col w-full md:w-1/3 md:border-r-1 py-5 pl-3.5 pr-3 border-[rgb(32,33,32)]">
+          {/* Header - Fixed */}
+          <header className="flex-shrink-0 flex justify-between items-center w-full h-8 mb-3">
             <div className="text-xl">Members</div>
 
             {/* Header Icons */}
@@ -104,8 +104,8 @@ export default function Home() {
             </div>
           </header>
 
-          {/* Search Bar */}
-          <div className="relative mb-4">
+          {/* Search Bar - Fixed */}
+          <div className="flex-shrink-0 relative mb-4">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <BiSearch className="text-gray-400 w-4 h-4" />
             </div>
@@ -125,166 +125,175 @@ export default function Home() {
             />
           </div>
 
-          {/* Loading State */}
-          {loading && (
-            <div className="relative">
-              {/* Ring Loading Spinner */}
+          {/* Member Lists Container - Scrollable */}
+          <div className="flex-1 min-h-0">
+            {/* Loading State */}
+            {loading && (
+              <div className="h-full relative">
+                {/* Ring Loading Spinner */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="absolute inset-0 flex flex-col items-center justify-center py-10 space-y-4 z-10"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <FaSpinner className="w-6 h-6 text-blue-500" />
+                  </motion.div>
+                  <p className="text-gray-400 text-sm">Loading members...</p>
+                </motion.div>
+
+                {/* Faded Skeleton Members List */}
+                <div className="-mx-2.5 flex-2 overflow-hidden space-y-2 opacity-40">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <div
+                      key={i}
+                      className="flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full"
+                    >
+                      <div className="h-12 w-12 rounded-full bg-neutral-600/50 animate-pulse"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-neutral-600/50 rounded animate-pulse w-3/4"></div>
+                        <div className="h-3 bg-neutral-600/30 rounded animate-pulse w-1/2"></div>
+                      </div>
+                      <div className="flex flex-col items-end space-y-1">
+                        <div className="h-3 bg-neutral-600/40 rounded animate-pulse w-16"></div>
+                        <div className="h-3 bg-neutral-600/30 rounded animate-pulse w-12"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Desktop Member list */}
+            {!loading && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="absolute inset-0 flex flex-col items-center justify-center py-8 space-y-4 z-10"
+                transition={{ duration: 0.3 }}
+                className="hidden md:block pr-2 h-full -mx-2.5 overflow-y-auto space-y-2 slim-scrollbar"
+                // ⬆️ Changed flex-1 to h-full
               >
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  <FaSpinner className="w-6 h-6 text-blue-500" />
-                </motion.div>
-                <p className="text-gray-400 text-sm">Loading members...</p>
+                <AnimatePresence>
+                  {filteredMembers &&
+                    filteredMembers.map((member, index) => (
+                      <motion.button
+                        key={member.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={() => handleMemberClick(member, "d")}
+                        className={`flex gap-4 h-18 pl-2 py-1 items-center rounded-md mb-0.5 w-full transition-all duration-200 ${
+                          selectedMember?.id === member.id
+                            ? "bg-neutral-600"
+                            : "hover:bg-neutral-700"
+                        }`}
+                      >
+                        <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
+                          <Image
+                            src={"/iron rank1.png"}
+                            width={40}
+                            height={40}
+                            alt="Profile Picture"
+                            className="rounded-4xl"
+                          />
+                        </div>
+
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="flex justify-between gap-4">
+                            <h3 className="text-white font-medium truncate capitalize">
+                              {member.name}
+                            </h3>
+                            <h3 className="text-gray-300 text-sm ">
+                              {member.number ??
+                                member.maleGNum ??
+                                member.femaleGNum ??
+                                "-----"}
+                            </h3>
+                          </div>
+                          <p className="text-gray-400 text-sm truncate">
+                            {member.role ?? "member"} - {member.team ?? "none"}
+                          </p>
+                        </div>
+                      </motion.button>
+                    ))}
+                  {emptySearch ? <div>No Such Member</div> : <div></div>}
+                </AnimatePresence>
               </motion.div>
+            )}
 
-              {/* Faded Skeleton Members List */}
-              <div className="md:hidden -mx-2.5 flex-2 overflow-hidden space-y-2 opacity-40">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <div
-                    key={i}
-                    className="flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full"
-                  >
-                    <div className="h-12 w-12 rounded-full bg-neutral-600/50 animate-pulse"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-neutral-600/50 rounded animate-pulse w-3/4"></div>
-                      <div className="h-3 bg-neutral-600/30 rounded animate-pulse w-1/2"></div>
-                    </div>
-                    <div className="flex flex-col items-end space-y-1">
-                      <div className="h-3 bg-neutral-600/40 rounded animate-pulse w-16"></div>
-                      <div className="h-3 bg-neutral-600/30 rounded animate-pulse w-12"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Member Item Mobile*/}
-          {!loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="md:hidden -mx-2.5 flex-2 overflow-y-auto space-y-2"
-            >
-              <AnimatePresence>
-                {filteredMembers &&
-                  filteredMembers.map((member, index) => (
-                    <motion.button
-                      key={member.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.05 }}
-                      onClick={() => handleMemberClick(member, "m")}
-                      className="flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-all duration-200 focus:bg-neutral-700 hover:bg-neutral-700"
-                    >
-                      <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
-                        <Image
-                          src={"/iron rank1.png"}
-                          width={40}
-                          height={40}
-                          alt="Profile Picture"
-                          className="rounded-4xl"
-                        />
-                      </div>
-
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="flex justify-between">
-                          <h3 className="text-white font-medium truncate capitalize">
-                            {member.name}
-                          </h3>
-                          <h3 className="text-gray-300 text-sm truncate">
-                            {member.number ??
-                              member.maleGNum ??
-                              member.femaleGNum ??
-                              "-----"}
-                          </h3>
+            {/* Mobile Member list */}
+            {!loading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="md:hidden h-full -mx-2.5 overflow-y-auto space-y-2"
+                // ⬆️ Changed flex-1 to h-full
+              >
+                <AnimatePresence>
+                  {filteredMembers &&
+                    filteredMembers.map((member, index) => (
+                      <motion.button
+                        key={member.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={() => handleMemberClick(member, "m")}
+                        className="flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-all duration-200 focus:bg-neutral-700 hover:bg-neutral-700"
+                      >
+                        <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
+                          <Image
+                            src={"/iron rank1.png"}
+                            width={40}
+                            height={40}
+                            alt="Profile Picture"
+                            className="rounded-4xl"
+                          />
                         </div>
-                        <p className="text-gray-400 text-sm truncate">
-                          {member.role ?? "member"} - {member.team ?? "none"}
-                        </p>
-                      </div>
-                    </motion.button>
-                  ))}
-                {emptySearch ? (
-                  <div className="text-white z-30 mx-20 font-medium truncate capitalize">
-                    No Such Member
-                  </div>
-                ) : (
-                  <div></div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
 
-          {/* Desktop Member list */}
-          {!loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="hidden md:block flex-2 -mx-2.5 overflow-y-auto space-y-2"
-            >
-              <AnimatePresence>
-                {filteredMembers &&
-                  filteredMembers.map((member, index) => (
-                    <motion.button
-                      key={member.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.05 }}
-                      onClick={() => handleMemberClick(member, "d")}
-                      className={`flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-all duration-200 ${
-                        selectedMember?.id === member.id
-                          ? "bg-neutral-600"
-                          : "hover:bg-neutral-700"
-                      }`}
-                    >
-                      <div className="flex h-12 w-12 rounded-4xl bg-neutral-900 justify-center items-center">
-                        <Image
-                          src={"/iron rank1.png"}
-                          width={40}
-                          height={40}
-                          alt="Profile Picture"
-                          className="rounded-4xl"
-                        />
-                      </div>
-
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="flex justify-between gap-4">
-                          <h3 className="text-white font-medium truncate capitalize">
-                            {member.name}
-                          </h3>
-                          <h3 className="text-gray-300 text-sm ">
-                            {member.number ??
-                              member.maleGNum ??
-                              member.femaleGNum ??
-                              "-----"}
-                          </h3>
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="flex justify-between">
+                            <h3 className="text-white font-medium truncate capitalize">
+                              {member.name}
+                            </h3>
+                            <h3 className="text-gray-300 text-sm truncate">
+                              {member.number ??
+                                member.maleGNum ??
+                                member.femaleGNum ??
+                                "-----"}
+                            </h3>
+                          </div>
+                          <p className="text-gray-400 text-sm truncate">
+                            {member.role ?? "member"} - {member.team ?? "none"}
+                          </p>
                         </div>
-                        <p className="text-gray-400 text-sm truncate">
-                          {member.role ?? "member"} - {member.team ?? "none"}
-                        </p>
-                      </div>
-                    </motion.button>
-                  ))}
-                {emptySearch ? <div>No Such Member</div> : <div></div>}
-              </AnimatePresence>
-            </motion.div>
-          )}
+                      </motion.button>
+                    ))}
+                  {emptySearch ? (
+                    <div className="text-white z-30 mx-20 font-medium truncate capitalize">
+                      No Such Member
+                    </div>
+                  ) : (
+                    <div></div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </div>
         </div>
+
         {/* Second Section */}
         <DetailsSection member={selectedMember} />
       </div>
-      <div className="mt-35 md:m-0"></div>
     </div>
   );
 }

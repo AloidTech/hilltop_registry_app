@@ -24,3 +24,27 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Slim scrollbar styles */
+.slim-scrollbar::-webkit-scrollbar {
+  width: 4px; /* Make it slimmer - default is usually 12-16px */
+}
+
+.slim-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* Invisible track */
+}
+
+.slim-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5); /* Semi-transparent gray */
+  border-radius: 2px; /* Rounded edges */
+}
+
+.slim-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7); /* Darker on hover */
+}
+
+/* For Firefox */
+.slim-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}

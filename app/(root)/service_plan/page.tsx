@@ -440,7 +440,7 @@ function ServicePlanPage() {
           ))
         )}
       </motion.div>
-      <div className="mt-25 md:m-0"></div>
+     
     </div>
   );
 }
