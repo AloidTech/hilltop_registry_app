@@ -180,6 +180,17 @@ function ServicePlanPage() {
     );
   }
 
+  // Short date formatter: e.g., "Sun, Sep 3" (adds year if not current year)
+  function formatShortDate(dateStr: string) {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return dateStr;
+    const sameYear = d.getFullYear() === new Date().getFullYear();
+    const options: Intl.DateTimeFormatOptions = sameYear
+      ? { weekday: "short", month: "short", day: "numeric" }
+      : { weekday: "short", month: "short", day: "numeric", year: "2-digit" };
+    return new Intl.DateTimeFormat("en-US", options).format(d);
+  }
+
   return (
     <div className="flex-1 pb-28 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-auto">
       {/* Enhanced Header */}
@@ -314,12 +325,7 @@ function ServicePlanPage() {
                   <FiCalendar className="w-6 h-6 md:w-5 md:h-5 text-gray-400" />
                   <div>
                     <h4 className="text-white font-medium text-sm md:text-base">
-                      {new Date(planDate).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                      {formatShortDate(planDate)}
                     </h4>
                     <p className="text-gray-400 text-xs md:text-sm">
                       {ServicePlans[planDate]?.length || 0} programs scheduled
@@ -440,7 +446,6 @@ function ServicePlanPage() {
           ))
         )}
       </motion.div>
-     
     </div>
   );
 }

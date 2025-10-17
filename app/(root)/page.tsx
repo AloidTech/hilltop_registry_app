@@ -190,7 +190,7 @@ export default function Home() {
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ delay: index * 0.05 }}
                         onClick={() => handleMemberClick(member, "d")}
-                        className={`flex gap-4 h-18 pl-2 py-1 items-center rounded-md mb-0.5 w-full transition-all duration-200 ${
+                        className={`flex gap-4 h-18 px-2 py-1 items-center rounded-md mb-0.5 w-full transition-all duration-200 ${
                           selectedMember?.id === member.id
                             ? "bg-neutral-600"
                             : "hover:bg-neutral-700"

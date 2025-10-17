@@ -19,6 +19,7 @@ interface ServicePlanProgram {
   TimePeriod: string;
   Program: string;
   Anchors: string[];
+  CustomAnchors: string[]; // NEW: per-program custom options
 }
 
 interface ServicePlanForm {
@@ -209,6 +210,7 @@ function AddServicePlanPage() {
         TimePeriod: "7:00am ~ 7:05am",
         Program: "Opening Prayer",
         Anchors: [],
+        CustomAnchors: [], // NEW
       },
     ],
   });
@@ -248,6 +250,7 @@ function AddServicePlanPage() {
           TimePeriod: `${newStartTime} ~ ${newEndTime}`,
           Program: "",
           Anchors: [],
+          CustomAnchors: [], // NEW
         },
       ],
     });
@@ -297,6 +300,32 @@ function AddServicePlanPage() {
       : [...program.Anchors, memberName];
 
     updateProgram(programIndex, "Anchors", newAnchors);
+  };
+
+  // Add a custom anchor name, add it to options (top), and mark selected
+  const addCustomAnchor = (programIndex: number) => {
+    const input = window.prompt("Enter anchor name");
+    const name = (input ?? "").trim();
+    if (!name) return;
+
+    const program = formData.programs[programIndex];
+
+    // Case-insensitive checks
+    const inCustom = (program.CustomAnchors || []).some(
+      (a) => a.toLowerCase() === name.toLowerCase()
+    );
+    const inSelected = program.Anchors.some(
+      (a) => a.toLowerCase() === name.toLowerCase()
+    );
+
+    // Ensure it shows as a top option
+    const newCustom = inCustom ? program.CustomAnchors : [name, ...(program.CustomAnchors || [])];
+    updateProgram(programIndex, "CustomAnchors", newCustom);
+
+    // Ensure it’s selected immediately
+    if (!inSelected) {
+      updateProgram(programIndex, "Anchors", [...program.Anchors, name]);
+    }
   };
 
   // Filter members based on search term
@@ -660,39 +689,85 @@ function AddServicePlanPage() {
                       <div className="max-h-32 overflow-y-auto border border-neutral-600 rounded-lg p-2 bg-neutral-700/30">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                           {/* Search Bar as First Item */}
-                          <div className="mb-2">
+                          <div className="mb-2 col-span-2 md:col-span-3">
                             <input
                               type="text"
                               value={anchorSearchTerm}
-                              onChange={(e) =>
-                                setAnchorSearchTerm(e.target.value)
-                              }
+                              onChange={(e) => setAnchorSearchTerm(e.target.value)}
                               placeholder="Search members..."
                               className="w-full p-2 bg-neutral-600 border border-neutral-500 rounded text-white text-sm focus:border-blue-500 focus:outline-none"
                             />
                           </div>
 
-                          {filteredMembers.map((member) => (
-                            <label
-                              key={member.id}
-                              className="flex items-center gap-2 p-2 hover:bg-neutral-600/30 rounded cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={program.Anchors.includes(member.name)}
-                                onChange={() =>
-                                  toggleAnchor(index, member.name)
-                                }
-                                className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
-                              />
-                              <span className="text-white capitalize text-sm">
-                                {member.name}
-                              </span>
-                            </label>
-                          ))}
+                          {/* 1) Custom anchors at the top */}
+                          {(() => {
+                            const search = anchorSearchTerm.toLowerCase();
+                            const customList = (program.CustomAnchors || []).filter((n) =>
+                              n.toLowerCase().includes(search)
+                            );
+                            return customList.map((name) => (
+                              <label
+                                key={`custom-${name}`}
+                                className="flex items-center gap-2 p-2 hover:bg-neutral-600/30 rounded cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={program.Anchors.includes(name)}
+                                  onChange={() => toggleAnchor(index, name)}
+                                  className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-white capitalize text-sm">
+                                  {name}
+                                </span>
+                                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-400/30">
+                                  Custom
+                                </span>
+                              </label>
+                            ));
+                          })()}
+
+                          {/* 2) Normal members (deduped against custom) */}
+                          {(() => {
+                            const customLower = new Set(
+                              (program.CustomAnchors || []).map((n) => n.toLowerCase())
+                            );
+                            const list = members
+                              .filter((m) =>
+                                m.name.toLowerCase().includes(anchorSearchTerm.toLowerCase())
+                              )
+                              .filter((m) => !customLower.has(m.name.toLowerCase())); // avoid duplicates
+                            return list.map((member) => (
+                              <label
+                                key={member.id}
+                                className="flex items-center gap-2 p-2 hover:bg-neutral-600/30 rounded cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={program.Anchors.includes(member.name)}
+                                  onChange={() => toggleAnchor(index, member.name)}
+                                  className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-white capitalize text-sm">
+                                  {member.name}
+                                </span>
+                              </label>
+                            ));
+                          })()}
                         </div>
                       </div>
                     )}
+
+                    {/* Add custom anchor by name */}
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => addCustomAnchor(index)}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-dashed border-neutral-500 hover:border-blue-500 text-gray-300 hover:text-blue-400 bg-neutral-700/30 hover:bg-blue-500/5 transition-colors"
+                      >
+                        <BsPlus className="w-4 h-4" />
+                        Add anchor by name
+                      </button>
+                    </div>
 
                     {/* Selected Anchors Display */}
                     {program.Anchors.length > 0 && (
