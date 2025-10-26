@@ -45,13 +45,22 @@ export default function LoginPage() {
     setErrors({});
 
     if (!email.trim()) return setErrors({ email: "Email is required." });
-    if (!validateEmail(email)) return setErrors({ email: "Enter a valid email." });
-    if (!password.trim()) return setErrors({ password: "Password is required." });
+    if (!validateEmail(email))
+      return setErrors({ email: "Enter a valid email." });
+    if (!password.trim())
+      return setErrors({ password: "Password is required." });
 
     try {
       setSubmitting(true);
-      await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
-      await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      await setPersistence(
+        auth,
+        remember ? browserLocalPersistence : browserSessionPersistence
+      );
+      await signInWithEmailAndPassword(
+        auth,
+        email.trim().toLowerCase(),
+        password
+      );
       router.push("/");
     } catch (e: any) {
       const code = e?.code || "";
@@ -89,11 +98,14 @@ export default function LoginPage() {
           "radial-gradient(1200px 600px at 20% 0%, rgba(255,160,122,0.45), rgba(0,0,0,0)), radial-gradient(1200px 800px at 100% 0%, rgba(147,112,219,0.45), rgba(0,0,0,0)), #0f0f12",
       }}
     >
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6">
-        <h1 className="text-3xl font-bold text-black">Sign in</h1>
-        <p className="mt-1 text-sm text-neutral-600">
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-white/20">
+        <h1 className="text-3xl font-bold text-white">Login in</h1>
+        <p className="mt-1 text-sm text-white/80">
           Don’t have an account?{" "}
-          <Link href="/auth/signup" className="text-indigo-600 hover:underline">
+          <Link
+            href="/auth/signup"
+            className="text-white underline underline-offset-4 hover:text-white/90"
+          >
             Sign up
           </Link>
         </p>
@@ -101,7 +113,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm text-neutral-800 mb-1">
+            <label htmlFor="email" className="block text-sm text-white/90 mb-1">
               Email address
             </label>
             <input
@@ -109,18 +121,25 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`w-full rounded-md border px-3 py-2 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                errors.email ? "border-red-400" : "border-neutral-300"
-              }`}
+              className={`w-full rounded-md px-3 py-2 bg-white/10 text-white placeholder-white/60 border ${
+                errors.email
+                  ? "border-red-400 focus:ring-2 focus:ring-red-400"
+                  : "border-white/30 focus:ring-2 focus:ring-white focus:border-white/80"
+              } focus:outline-none`}
               placeholder="you@example.com"
               autoComplete="email"
             />
-            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-300">{errors.email}</p>
+            )}
           </div>
 
           {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-sm text-neutral-800 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm text-white/90 mb-1"
+            >
               Password
             </label>
             <div className="relative">
@@ -129,28 +148,32 @@ export default function LoginPage() {
                 type={showPw ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full rounded-md border pr-10 px-3 py-2 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                  errors.password ? "border-red-400" : "border-neutral-300"
-                }`}
+                className={`w-full rounded-md pr-10 px-3 py-2 bg-white/10 text-white placeholder-white/60 border ${
+                  errors.password
+                    ? "border-red-400 focus:ring-2 focus:ring-red-400"
+                    : "border-white/30 focus:ring-2 focus:ring-white focus:border-white/80"
+                } focus:outline-none`}
                 placeholder="Your password"
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPw((v) => !v)}
-                className="absolute inset-y-0 right-0 pr-3 text-neutral-500 hover:text-neutral-800"
+                className="absolute inset-y-0 right-0 pr-3 text-white/80 hover:text-white"
                 aria-label={showPw ? "Hide password" : "Show password"}
                 tabIndex={-1}
               >
                 {showPw ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>
-            {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
+            {errors.password && (
+              <p className="mt-1 text-xs text-red-300">{errors.password}</p>
+            )}
             <div className="mt-2 text-right">
               <button
                 type="button"
                 onClick={handleForgotPassword}
-                className="text-xs text-indigo-600 hover:underline"
+                className="text-xs text-white/80 hover:text-white underline underline-offset-4"
               >
                 Forgot password?
               </button>
@@ -158,10 +181,10 @@ export default function LoginPage() {
           </div>
 
           {/* Remember me */}
-          <label className="flex items-center gap-3 text-sm text-neutral-700">
+          <label className="flex items-center gap-3 text-sm text-white/90">
             <input
               type="checkbox"
-              className="h-4 w-4"
+              className="h-4 w-4 accent-white"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
             />
@@ -172,20 +195,22 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className={`w-full rounded-full py-3 text-white text-sm font-semibold transition ${
+            className={`w-full rounded-full py-3 text-sm font-semibold transition ${
               canSubmit
-                ? "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
-                : "bg-neutral-300 cursor-not-allowed"
+                ? "bg-white text-neutral-900 hover:bg-white/90"
+                : "bg-white/30 text-white/60 cursor-not-allowed"
             }`}
           >
             {submitting ? "Signing in..." : "Sign in"}
           </button>
 
           {errors.general && (
-            <p className="text-sm text-red-600 text-center">{errors.general}</p>
+            <p className="text-sm text-red-300 text-center">{errors.general}</p>
           )}
           {errors.info && (
-            <p className="text-sm text-emerald-600 text-center">{errors.info}</p>
+            <p className="text-sm text-emerald-300 text-center">
+              {errors.info}
+            </p>
           )}
         </form>
       </div>
