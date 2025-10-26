@@ -8,6 +8,7 @@ interface ServicePlanProp {
   TimePeriod: string;
   Program: string;
   Anchors: Array<string>;
+  BackupAnchors: Array<string>;
 }
 
 export async function POST(request: NextRequest) {
@@ -23,10 +24,14 @@ export async function POST(request: NextRequest) {
 
     for (const plan of body["programs"]) {
       const anchors = plan["Anchors"];
+      const BackupAnchors = plan["BackupAnchors"];
       const anchorString = Array.isArray(anchors)
         ? anchors.join(", ")
         : anchors || "";
-      const program = [plan["TimePeriod"], plan["Program"], anchorString];
+      const backAnchorString = Array.isArray(BackupAnchors)
+        ? anchors.join(", ")
+        : anchors || "";
+      const program = [plan["TimePeriod"], plan["Program"], anchorString, backAnchorString];
       plans.push(program);
     }
     console.log(`Sheet Name: ${Date}\n Service Plan: ` + plans);
@@ -100,7 +105,7 @@ export async function GET() {
     // Check server cache first
     const cachedPlans = serverCache.get(CACHE_KEYS.SERVICE_PLANS);
     if (cachedPlans) {
-      console.log("✅ Returning cached service plans data");
+      console.log("✅ Returning cached service plan data");
       return NextResponse.json({
         data: cachedPlans,
         source: "cache",
@@ -108,7 +113,7 @@ export async function GET() {
       });
     }
 
-    console.log("📡 Fetching fresh service plans data from Google Sheets");
+    console.log("📡 Fetching fresh service plan data from Google Sheets");
 
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
@@ -145,7 +150,7 @@ export async function GET() {
     const sheetDates = sheetNames
       ?.filter((name) => name && name.length === 10) // YYYY-MM-DD format
       ?.sort((a, b) => b.localeCompare(a)) // Newest first
-      ?.slice(0, 10); // Get more plans
+      ?.slice(0, 10); // Get more plan
     const sheetsToGet: string[] = [];
 
     for (const sName of sheetDates ?? []) {
@@ -169,6 +174,7 @@ export async function GET() {
           TimePeriod: row[0] || "",
           Program: row[1] || "",
           Anchors: row[2] ? row[2].split(", ") : [],
+          BackupAnchors: row[3] ? row[2].split(", ") : [],
         }));
 
         ServicePlans[date] = programs;
@@ -177,14 +183,14 @@ export async function GET() {
 
     console.log("Final ServicePlans:", ServicePlans);
 
-    // Cache the service plans data
+    // Cache the service plan data
     serverCache.set(
       CACHE_KEYS.SERVICE_PLANS,
       ServicePlans,
       CACHE_TTL.SERVICE_PLANS
     );
     console.log(
-      "💾 Service plans data cached for",
+      "💾 Service plan data cached for",
       CACHE_TTL.SERVICE_PLANS,
       "seconds"
     );
@@ -195,10 +201,10 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (e) {
-    console.error("Failed to fetch service plans:", e);
+    console.error("Failed to fetch service plan:", e);
     return NextResponse.json(
       {
-        error: "Failed to fetch service plans",
+        error: "Failed to fetch service plan",
       },
       { status: 500 }
     );

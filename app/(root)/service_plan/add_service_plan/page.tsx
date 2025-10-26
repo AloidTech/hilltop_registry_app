@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BsChevronDown, BsClock, BsPlus, BsTrash } from "react-icons/bs";
 import { FiSave, FiArrowLeft, FiCalendar } from "react-icons/fi";
@@ -19,7 +19,8 @@ interface ServicePlanProgram {
   TimePeriod: string;
   Program: string;
   Anchors: string[];
-  CustomAnchors: string[]; // NEW: per-program custom options
+  BackupAnchors: string[];
+  // CustomAnchors: string[]; // removed: derive customs from selected vs members
 }
 
 interface ServicePlanForm {
@@ -111,10 +112,36 @@ const CustomTimePicker: React.FC<TimePickerProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const listRef = useRef<HTMLDivElement | null>(null);
 
-  const filteredOptions = timeOptions.filter((time) =>
-    time.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter by search
+  const filtered = useMemo(
+    () =>
+      timeOptions.filter((t) =>
+        t.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [searchTerm]
   );
+
+  // Reorder so the list STARTS at the currently picked time, wrapping around
+  const orderedOptions = useMemo(() => {
+    if (!value) return filtered;
+    const i = filtered.findIndex((t) => t === value);
+    if (i <= 0) return filtered;
+    return [...filtered.slice(i), ...filtered.slice(0, i)];
+  }, [filtered, value]);
+
+  // When opening, scroll the selected option into view
+  useEffect(() => {
+    if (!isOpen) return;
+    const id = requestAnimationFrame(() => {
+      const el = listRef.current?.querySelector<HTMLElement>(
+        `[data-time="${CSS.escape(value)}"]`
+      );
+      el?.scrollIntoView({ block: "nearest" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isOpen, value]);
 
   const handleSelect = (time: string) => {
     onChange(time);
@@ -149,7 +176,6 @@ const CustomTimePicker: React.FC<TimePickerProps> = ({
             transition={{ duration: 0.15 }}
             className="absolute top-full left-0 right-0 z-50 mt-1 bg-neutral-700 border border-neutral-600 rounded-lg shadow-xl max-h-60 overflow-hidden"
           >
-            {/* Search Input */}
             <div className="p-2 border-b border-neutral-600">
               <input
                 type="text"
@@ -161,12 +187,12 @@ const CustomTimePicker: React.FC<TimePickerProps> = ({
               />
             </div>
 
-            {/* Time Options */}
-            <div className="overflow-y-auto max-h-48">
-              {filteredOptions.length > 0 ? (
-                filteredOptions.map((time) => (
+            <div ref={listRef} className="overflow-y-auto max-h-48">
+              {orderedOptions.length > 0 ? (
+                orderedOptions.map((time) => (
                   <button
                     key={time}
+                    data-time={time}
                     type="button"
                     onClick={() => handleSelect(time)}
                     className={`w-full p-2 text-left hover:bg-neutral-600 transition-colors text-sm ${
@@ -188,7 +214,6 @@ const CustomTimePicker: React.FC<TimePickerProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Click outside to close */}
       {isOpen && (
         <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
       )}
@@ -210,7 +235,8 @@ function AddServicePlanPage() {
         TimePeriod: "7:00am ~ 7:05am",
         Program: "Opening Prayer",
         Anchors: [],
-        CustomAnchors: [], // NEW
+        BackupAnchors: [],
+        // CustomAnchors: [], // removed
       },
     ],
   });
@@ -239,7 +265,7 @@ function AddServicePlanPage() {
 
   const addProgram = () => {
     const lastProgram = formData.programs.at(-1);
-    const endTime = lastProgram?.TimePeriod.split("~")[1] || "7:05";
+    const endTime = lastProgram?.TimePeriod.split("~")[1] || "7:05am";
     const newStartTime = endTime;
     const newEndTime = getNextEndTime(endTime);
     setFormData({
@@ -250,7 +276,8 @@ function AddServicePlanPage() {
           TimePeriod: `${newStartTime} ~ ${newEndTime}`,
           Program: "",
           Anchors: [],
-          CustomAnchors: [], // NEW
+          BackupAnchors: [],
+          // CustomAnchors: [], // removed
         },
       ],
     });
@@ -264,10 +291,38 @@ function AddServicePlanPage() {
   };
 
   const getNextEndTime = (currentTime: string) => {
-    const minute = currentTime.split(":")[1];
-    const hour = currentTime.split(":")[0];
-    const intMinute = parseInt(minute, 10);
-    const newEndTime = `${hour}:${intMinute + 5}`;
+    // currentTime examples: "7:05am", "12:30pm"
+    const parts = currentTime.split(":");
+    const hourPart = parts[0];
+    const minutePart = parts[1] || "";
+
+    // extract meridiem (am/pm) and numeric minute
+    const meridiemMatch = minutePart.match(/(am|pm)$/i);
+    const tOD = meridiemMatch ? meridiemMatch[1].toLowerCase() : "";
+    const minuteDigits = minutePart.replace(/[^0-9]/g, "");
+    const intMinute = parseInt(minuteDigits || "0", 10);
+
+    // parse hour as number
+    let hourNum = parseInt(hourPart, 10) || 0;
+    let newMinute = intMinute + 5;
+    let newTOD = tOD;
+
+    // handle minute overflow
+    if (newMinute >= 60) {
+      newMinute -= 60;
+      // increment hour using 12-hour wrap
+      hourNum = (hourNum % 12) + 1;
+      // flip meridiem when crossing 11->12 boundary
+      if (hourNum === 12) {
+        newTOD = tOD === "am" ? "pm" : tOD === "pm" ? "am" : tOD;
+      }
+    }
+
+    const newEndTime = `${hourNum}:${String(newMinute).padStart(
+      2,
+      "0"
+    )}${newTOD}`;
+    console.log("time of day: ", tOD, "minute: ", minutePart);
     return newEndTime;
   };
 
@@ -302,30 +357,42 @@ function AddServicePlanPage() {
     updateProgram(programIndex, "Anchors", newAnchors);
   };
 
-  // Add a custom anchor name, add it to options (top), and mark selected
-  const addCustomAnchor = (programIndex: number) => {
+  // Toggle selection for either Anchors or BackupAnchors
+  const toggleAnchorField = (
+    programIndex: number,
+    field: "Anchors" | "BackupAnchors",
+    name: string
+  ) => {
+    const program = formData.programs[programIndex];
+    const selected = (program as any)[field] as string[];
+    const exists = selected.some((n) => n.toLowerCase() === name.toLowerCase());
+    const next = exists
+      ? selected.filter((n) => n.toLowerCase() !== name.toLowerCase())
+      : [...selected, name];
+    updateProgram(programIndex, field, next);
+  };
+
+  // Add a custom anchor by just selecting it in the target field.
+  // It will appear as "custom" because it's not in members.
+  const addCustomAnchorTo = (
+    programIndex: number,
+    field: "Anchors" | "BackupAnchors"
+  ) => {
     const input = window.prompt("Enter anchor name");
     const name = (input ?? "").trim();
     if (!name) return;
 
-    const program = formData.programs[programIndex];
+    const programs = [...formData.programs];
+    const p = { ...programs[programIndex] };
 
-    // Case-insensitive checks
-    const inCustom = (program.CustomAnchors || []).some(
-      (a) => a.toLowerCase() === name.toLowerCase()
-    );
-    const inSelected = program.Anchors.some(
-      (a) => a.toLowerCase() === name.toLowerCase()
-    );
-
-    // Ensure it shows as a top option
-    const newCustom = inCustom ? program.CustomAnchors : [name, ...(program.CustomAnchors || [])];
-    updateProgram(programIndex, "CustomAnchors", newCustom);
-
-    // Ensure it’s selected immediately
-    if (!inSelected) {
-      updateProgram(programIndex, "Anchors", [...program.Anchors, name]);
+    const selected = (p as any)[field] as string[];
+    const exists = selected.some((n) => n.toLowerCase() === name.toLowerCase());
+    if (!exists) {
+      (p as any)[field] = [...selected, name];
     }
+
+    programs[programIndex] = p;
+    setFormData({ ...formData, programs });
   };
 
   // Filter members based on search term
@@ -378,7 +445,7 @@ function AddServicePlanPage() {
   // Show loading screen while members are being fetched
   if (membersLoading) {
     return (
-      <div className="flex-1 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-auto">
+      <div className="flex-1 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-">
         {/* Header Skeleton */}
         <motion.div className="sticky top-0 z-10 flex justify-between -mx-6 items-center px-6 py-2 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
           <div className="flex items-center gap-4">
@@ -476,9 +543,9 @@ function AddServicePlanPage() {
   }
 
   return (
-    <div className="flex-1 px-6 bg-neutral-800/50 h-screen overflow-y-auto">
+    <div className="flex-1 px-6 bg-neutral-800/50 h-full flex flex-col">
       {/* Compact Header */}
-      <motion.div className="sticky top-0 z-10 flex justify-between -mx-6 items-center px-6 py-2 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
+      <motion.div className="sticky top-0 z-30 flex justify-between -mx-6 items-center px-6 py-2 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
         <div className="flex items-center gap-4">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -528,7 +595,7 @@ function AddServicePlanPage() {
       <form
         id="service-plan-form"
         onSubmit={handleSubmit}
-        className="space-y-6 pb-24"
+        className="space-y-6 pb-11"
       >
         {/* Date Selection */}
         <motion.div
@@ -646,142 +713,34 @@ function AddServicePlanPage() {
                     </div>
                   </div>
 
-                  {/* Anchors Selection */}
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">
-                      Anchors ({program.Anchors.length} selected)
-                    </label>
+                  <div className="flex-col gap-5 md:flex">
+                    <AnchorSelector
+                      title="Anchors"
+                      members={members}
+                      membersLoading={membersLoading}
+                      selected={program.Anchors}
+                      // customAnchors={program.CustomAnchors}
+                      onToggle={(name) =>
+                        toggleAnchorField(index, "Anchors", name)
+                      }
+                      onAddCustom={() => addCustomAnchorTo(index, "Anchors")}
+                    />
 
-                    {membersLoading ? (
-                      <div className="relative">
-                        {/* Ring Loading Spinner */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-neutral-700/80 backdrop-blur-sm rounded-lg">
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{
-                              duration: 1,
-                              repeat: Infinity,
-                              ease: "linear",
-                            }}
-                            className="w-6 h-6 border-2 border-gray-400/30 border-t-gray-400 rounded-full mb-2"
-                          />
-                          <span className="text-gray-300 text-sm">
-                            Loading members...
-                          </span>
-                        </div>
-
-                        {/* Faded Skeleton Grid */}
-                        <div className="max-h-32 overflow-hidden border border-neutral-600 rounded-lg p-2 bg-neutral-700/20 opacity-50">
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {[1, 2, 3, 4, 5, 6].map((i) => (
-                              <div
-                                key={i}
-                                className="flex items-center gap-2 p-2 rounded"
-                              >
-                                <div className="w-4 h-4 bg-neutral-600/40 rounded animate-pulse"></div>
-                                <div className="h-3 bg-neutral-600/40 rounded animate-pulse flex-1"></div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="max-h-32 overflow-y-auto border border-neutral-600 rounded-lg p-2 bg-neutral-700/30">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {/* Search Bar as First Item */}
-                          <div className="mb-2 col-span-2 md:col-span-3">
-                            <input
-                              type="text"
-                              value={anchorSearchTerm}
-                              onChange={(e) => setAnchorSearchTerm(e.target.value)}
-                              placeholder="Search members..."
-                              className="w-full p-2 bg-neutral-600 border border-neutral-500 rounded text-white text-sm focus:border-blue-500 focus:outline-none"
-                            />
-                          </div>
-
-                          {/* 1) Custom anchors at the top */}
-                          {(() => {
-                            const search = anchorSearchTerm.toLowerCase();
-                            const customList = (program.CustomAnchors || []).filter((n) =>
-                              n.toLowerCase().includes(search)
-                            );
-                            return customList.map((name) => (
-                              <label
-                                key={`custom-${name}`}
-                                className="flex items-center gap-2 p-2 hover:bg-neutral-600/30 rounded cursor-pointer"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={program.Anchors.includes(name)}
-                                  onChange={() => toggleAnchor(index, name)}
-                                  className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
-                                />
-                                <span className="text-white capitalize text-sm">
-                                  {name}
-                                </span>
-                                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-400/30">
-                                  Custom
-                                </span>
-                              </label>
-                            ));
-                          })()}
-
-                          {/* 2) Normal members (deduped against custom) */}
-                          {(() => {
-                            const customLower = new Set(
-                              (program.CustomAnchors || []).map((n) => n.toLowerCase())
-                            );
-                            const list = members
-                              .filter((m) =>
-                                m.name.toLowerCase().includes(anchorSearchTerm.toLowerCase())
-                              )
-                              .filter((m) => !customLower.has(m.name.toLowerCase())); // avoid duplicates
-                            return list.map((member) => (
-                              <label
-                                key={member.id}
-                                className="flex items-center gap-2 p-2 hover:bg-neutral-600/30 rounded cursor-pointer"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={program.Anchors.includes(member.name)}
-                                  onChange={() => toggleAnchor(index, member.name)}
-                                  className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
-                                />
-                                <span className="text-white capitalize text-sm">
-                                  {member.name}
-                                </span>
-                              </label>
-                            ));
-                          })()}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Add custom anchor by name */}
-                    <div className="mt-2">
-                      <button
-                        type="button"
-                        onClick={() => addCustomAnchor(index)}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-dashed border-neutral-500 hover:border-blue-500 text-gray-300 hover:text-blue-400 bg-neutral-700/30 hover:bg-blue-500/5 transition-colors"
-                      >
-                        <BsPlus className="w-4 h-4" />
-                        Add anchor by name
-                      </button>
+                    <div className="mt-4 md:mt-0">
+                      <AnchorSelector
+                        title="Backup Anchors"
+                        members={members}
+                        membersLoading={membersLoading}
+                        selected={program.BackupAnchors}
+                        // customAnchors={program.CustomAnchors}
+                        onToggle={(name) =>
+                          toggleAnchorField(index, "BackupAnchors", name)
+                        }
+                        onAddCustom={() =>
+                          addCustomAnchorTo(index, "BackupAnchors")
+                        }
+                      />
                     </div>
-
-                    {/* Selected Anchors Display */}
-                    {program.Anchors.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {program.Anchors.map((anchor, anchorIndex) => (
-                          <span
-                            key={anchorIndex}
-                            className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded-full text-xs border border-blue-500/30"
-                          >
-                            {anchor}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   {/* Add Program Button - Show only on the last program */}
@@ -821,8 +780,150 @@ function AddServicePlanPage() {
             </div>
           </div>
         </motion.div>
-        <div className="mt-5 md:m-0"></div>
       </form>
+    </div>
+  );
+}
+
+// Reusable selector component
+function AnchorSelector(props: {
+  title: string;
+  members: Member[];
+  membersLoading: boolean;
+  selected: string[];
+  // customAnchors: string[];
+  onToggle: (name: string) => void;
+  onAddCustom: () => void;
+}) {
+  const {
+    title,
+    members,
+    membersLoading,
+    selected,
+    // customAnchors,
+    onToggle,
+    onAddCustom,
+  } = props;
+  const [search, setSearch] = useState("");
+
+  const customFiltered: string[] = []; // customAnchors.filter((n) =>
+  // n.toLowerCase().includes(search.toLowerCase())
+  // );
+  const customLower = new Set<string>(
+    customFiltered.map((n) => n.toLowerCase())
+  );
+  const normalFiltered = members
+    .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((m) => !customLower.has(m.name.toLowerCase())); // avoid duplicates
+
+  return (
+    <div>
+      <label className="block text-gray-400 text-sm mb-2">
+        {title} ({selected.length} selected)
+      </label>
+
+      {membersLoading ? (
+        <div className="relative">
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-neutral-700/80 backdrop-blur-sm rounded-lg">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-6 h-6 border-2 border-gray-400/30 border-t-gray-400 rounded-full mb-2"
+            />
+            <span className="text-gray-300 text-sm">Loading members...</span>
+          </div>
+          <div className="max-h-32 overflow-hidden border border-neutral-600 rounded-lg p-2 bg-neutral-700/20 opacity-50">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="flex items-center gap-2 p-2 rounded">
+                  <div className="w-4 h-4 bg-neutral-600/40 rounded animate-pulse" />
+                  <div className="h-3 bg-neutral-600/40 rounded animate-pulse flex-1" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="max-h-32 overflow-y-auto slim-scrollbar border border-neutral-600 rounded-lg p-2 bg-neutral-700/30">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {/* Search */}
+            <div className="mb-2 col-span-2 md:col-span-3">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search members..."
+                className="w-full p-2 bg-neutral-600 border border-neutral-500 rounded text-white text-sm focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            {/* Custom anchors first */}
+            {customFiltered.map((name) => (
+              <label
+                key={`custom-${name}`}
+                className="flex items-center gap-2 p-2 hover:bg-neutral-600/30 rounded cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.some(
+                    (n) => n.toLowerCase() === name.toLowerCase()
+                  )}
+                  onChange={() => onToggle(name)}
+                  className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
+                />
+                <span className="text-white capitalize text-sm">{name}</span>
+                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-400/30">
+                  Custom
+                </span>
+              </label>
+            ))}
+
+            {/* Normal members (deduped) */}
+            {normalFiltered.map((m) => (
+              <label
+                key={m.id}
+                className="flex items-center gap-2 p-2 hover:bg-neutral-600/30 rounded cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.some(
+                    (n) => n.toLowerCase() === m.name.toLowerCase()
+                  )}
+                  onChange={() => onToggle(m.name)}
+                  className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
+                />
+                <span className="text-white capitalize text-sm">{m.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Add custom anchor */}
+      <div className="mt-2">
+        <button
+          type="button"
+          onClick={onAddCustom}
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-neutral-500 hover:border-blue-500 text-gray-300 hover:text-blue-400 bg-neutral-700/30 hover:bg-blue-500/5 transition-colors"
+        >
+          <BsPlus className="w-4 h-4" />
+          Add anchor by name
+        </button>
+      </div>
+
+      {/* Selected chips */}
+      {selected.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {selected.map((name, i) => (
+            <span
+              key={`${name}-${i}`}
+              className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded-full text-xs border border-blue-500/30"
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
