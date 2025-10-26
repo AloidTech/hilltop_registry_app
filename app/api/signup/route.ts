@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UUID } from "crypto";
 import { adminAuth, adminDb, AdminFieldValue } from "@/app/serverapp";
+
+type SignupBody = {
+  name: string;
+  email: string;
+  password: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json();
-    var role;
-    if (name == "zane aloid") {
-      role = "admin";
-    } else {
-      role = "user";
-    }
-    if (!name?.trim()) return NextResponse.json({ error: "Name is required" });
+    const { name, email, password } = (await request.json()) as SignupBody;
+
+    const role = name === "zane aloid" ? "admin" : "user";
+
+    if (!name?.trim())
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     if (!email?.trim())
-      return NextResponse.json({ error: "Email is required" });
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     if (!password?.trim())
-      return NextResponse.json({ error: "Password is required" });
+      return NextResponse.json(
+        { error: "Password is required" },
+        { status: 400 }
+      );
 
     const user = await adminAuth.createUser({
       displayName: name.trim(),
@@ -35,7 +41,14 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ _id: user.uid }, { status: 201 });
-  } catch (e: any) {
-    return NextResponse.json({ error: `Failed to create user ${e.message}` });
+  } catch (e: unknown) {
+    const message =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message?: unknown }).message)
+        : "Unknown error";
+    return NextResponse.json(
+      { error: `Failed to create user ${message}` },
+      { status: 500 }
+    );
   }
 }

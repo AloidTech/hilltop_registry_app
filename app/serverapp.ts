@@ -6,7 +6,6 @@ import {
   type Firestore,
 } from "firebase-admin/firestore";
 import { getAuth, type Auth } from "firebase-admin/auth";
-import { buffer } from "stream/consumers";
 
 let adminApp: App;
 if (!getApps().length) {

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { MdMenu } from "react-icons/md";
 import { BiCalendarEvent, BiUserCircle } from "react-icons/bi";
-import { FiUsers, FiUser, FiSettings, FiBriefcase } from "react-icons/fi";
+import { FiUsers, FiSettings, FiBriefcase } from "react-icons/fi";
 
 export function NavBarDeskt() {
   const [pressedButtonId, setPressedButtonId] = useState("1");
@@ -188,7 +188,7 @@ export const NavBarMobile = () => {
         >
           <FiSettings size={22} />
         </button>
-         <p className="text-xs text-center text-gray-400">Settings</p>
+        <p className="text-xs text-center text-gray-400">Settings</p>
       </div>
 
       {/* Bottom/profile (user icon) */}
@@ -205,7 +205,7 @@ export const NavBarMobile = () => {
         >
           <BiUserCircle size={28} />
         </button>
-         <p className="text-xs text-center text-gray-400">Profile</p>
+        <p className="text-xs text-center text-gray-400">Profile</p>
       </div>
     </div>
   );

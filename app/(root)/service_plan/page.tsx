@@ -8,13 +8,14 @@ import {
   BsThreeDotsVertical,
 } from "react-icons/bs";
 import { FiUser, FiCalendar, FiEdit3, FiDownload } from "react-icons/fi";
-import { MdExpandMore } from "react-icons/md";
+import { MdExpandMore, MdSwapHoriz } from "react-icons/md";
 
 export interface ServicePlanProp {
   id: string;
   TimePeriod: string;
   Program: string;
   Anchors: Array<string>;
+  BackupAnchors?: Array<string>; // <— added
 }
 
 export interface ServicePlanData {
@@ -26,6 +27,7 @@ function ServicePlanPage() {
   const [ServicePlans, setServicePlans] = useState<ServicePlanData>({});
   const servicePlanDates = Object.keys(ServicePlans);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
+  const [showBackups, setShowBackups] = useState<Record<string, boolean>>({}); // <— per-date toggle
 
   useEffect(() => {
     const fetchServicePlans = async () => {
@@ -342,6 +344,26 @@ function ServicePlanPage() {
                   >
                     {getStatusText(index)}
                   </span>
+                  {/* Toggle Anchors <-> Backup Anchors */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowBackups((prev) => ({
+                        ...prev,
+                        [planDate]: !prev[planDate],
+                      }));
+                    }}
+                    className={`p-1.5 md:p-2 rounded-lg transition-colors border ${
+                      showBackups[planDate]
+                        ? "bg-purple-600 border-purple-500 text-white hover:bg-purple-500"
+                        : "hover:bg-neutral-600 border-purple-500/30 text-purple-300"
+                    }`}
+                    title="Show backup anchors"
+                  >
+                    <MdSwapHoriz className="w-4 h-4" />
+                  </motion.button>
 
                   <div className="flex gap-1 md:gap-2">
                     <motion.button
@@ -376,49 +398,119 @@ function ServicePlanPage() {
                   >
                     <div className="p-4 md:p-6 bg-neutral-800/30">
                       <div className="space-y-2 md:space-y-3">
-                        {ServicePlans[planDate].map((program, programIndex) => (
-                          <motion.div
-                            key={programIndex}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: programIndex * 0.05 }}
-                            className="flex flex-col md:flex-row md:items-center md:justify-between p-3 md:p-4 bg-neutral-700/30 rounded-lg hover:bg-neutral-600/30 transition-colors gap-3 md:gap-4"
-                          >
-                            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 flex-1">
-                              {/* Time Period - Smaller width */}
-                              <div className="flex items-center gap-2 text-blue-400 font-mono text-xs md:text-sm md:min-w-[100px] md:max-w-[140px]">
-                                <BsClock className="w-3 h-3 md:w-4 md:h-4" />
-                                {program.TimePeriod}
-                              </div>
+                        {ServicePlans[planDate].map((program, programIndex) => {
+                          const isBackup = !!showBackups[planDate];
+                          const anchorsList = isBackup
+                            ? program.BackupAnchors ?? []
+                            : program.Anchors;
 
-                              {/* Program Details - More space */}
-                              <div className="flex-1 md:flex-[2]">
-                                <h5 className="text-white font-medium text-sm md:text-base">
-                                  {program.Program}
-                                </h5>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <FiUser className="w-3 h-3 text-gray-400" />
-                                  <span className="text-gray-400 text-xs md:text-sm">
-                                    {program.Anchors.join(", ") ||
-                                      "No anchors assigned"}
-                                  </span>
+                          return (
+                            <motion.div
+                              key={programIndex}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: programIndex * 0.05 }}
+                              className="flex flex-col md:flex-row md:items-center md:justify-between p-3 md:p-4 bg-neutral-700/30 rounded-lg hover:bg-neutral-600/30 transition-colors gap-3 md:gap-4"
+                            >
+                              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 flex-1">
+                                {/* Time Period */}
+                                <div className="flex items-center gap-2 text-blue-400 font-mono text-xs md:text-sm md:min-w-[100px] md:max-w-[140px]">
+                                  <BsClock className="w-3 h-3 md:w-4 md:h-4" />
+                                  {program.TimePeriod}
+                                </div>
+
+                                {/* Program + Anchors text */}
+                                <div className="flex-1 md:flex-[2]">
+                                  <h5 className="text-white font-medium text-sm md:text-base">
+                                    {program.Program}
+                                  </h5>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <FiUser
+                                      className={`w-3 h-3 ${
+                                        isBackup
+                                          ? "text-purple-300"
+                                          : "text-gray-400"
+                                      }`}
+                                    />
+                                    <span
+                                      className={`text-xs md:text-sm ${
+                                        isBackup
+                                          ? "text-purple-300"
+                                          : "text-gray-400"
+                                      }`}
+                                    >
+                                      {anchorsList.length
+                                        ? anchorsList.join(", ")
+                                        : isBackup
+                                        ? "No backup anchors assigned"
+                                        : "No anchors assigned"}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Avatars - Right side with more space */}
-                            <div className="flex gap-1 flex-wrap md:flex-nowrap md:justify-end md:min-w-[120px]">
-                              {program.Anchors.map((anchor, anchorIndex) => (
-                                <div
-                                  key={anchorIndex}
-                                  className="w-6 h-6 md:w-8 md:h-8 bg-neutral-600 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                              {/* Anchors chips with horizontal flip between primary/backups */}
+                              <div
+                                className="relative md:min-w-[140px]"
+                                style={{ perspective: 800, minHeight: "2rem" }}
+                              >
+                                <motion.div
+                                  animate={{
+                                    rotateY: showBackups[planDate] ? 180 : 0,
+                                  }}
+                                  transition={{ duration: 0.45 }}
+                                  style={{ transformStyle: "preserve-3d" }}
+                                  className="relative"
                                 >
-                                  {anchor.charAt(0).toUpperCase()}
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        ))}
+                                  {/* Front face: Anchors */}
+                                  <div
+                                    className="flex gap-1 flex-wrap md:flex-nowrap md:justify-end"
+                                    style={{ backfaceVisibility: "hidden" }}
+                                  >
+                                    {program.Anchors.map((anchor, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="w-6 h-6 md:w-8 md:h-8 bg-neutral-600 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                                      >
+                                        {anchor.charAt(0).toUpperCase()}
+                                      </div>
+                                    ))}
+                                    {!program.Anchors?.length && (
+                                      <span className="text-xs text-gray-400">
+                                        —
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Back face: Backup Anchors (purple) */}
+                                  <div
+                                    className="absolute inset-0 flex gap-1 flex-wrap md:flex-nowrap md:justify-end"
+                                    style={{
+                                      transform: "rotateY(180deg)",
+                                      backfaceVisibility: "hidden",
+                                    }}
+                                  >
+                                    {(program.BackupAnchors ?? []).map(
+                                      (anchor, idx) => (
+                                        <div
+                                          key={idx}
+                                          className="w-6 h-6 md:w-8 md:h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium ring-1 ring-purple-400/60"
+                                        >
+                                          {anchor.charAt(0).toUpperCase()}
+                                        </div>
+                                      )
+                                    )}
+                                    {!(program.BackupAnchors ?? []).length && (
+                                      <span className="text-xs text-purple-300">
+                                        —
+                                      </span>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
                       </div>
 
                       {/* Summary */}

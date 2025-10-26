@@ -62,8 +62,11 @@ export default function LoginPage() {
         password
       );
       router.push("/");
-    } catch (e: any) {
-      const code = e?.code || "";
+    } catch (e: unknown) {
+      const code =
+        e && typeof e === "object" && "code" in e
+          ? String((e as { code?: unknown }).code ?? "")
+          : "";
       const map: Record<string, string> = {
         "auth/invalid-credential": "Invalid email or password.",
         "auth/user-not-found": "No account matches this email.",
