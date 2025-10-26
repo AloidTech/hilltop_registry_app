@@ -90,9 +90,9 @@ export async function POST(request: NextRequest) {
       Date: response,
     });
   } catch (e) {
-    console.error("Error fetching members: ", e);
+    console.error("Error posting serivce plan: ", e);
     return NextResponse.json(
-      { error: "Failed to fetch members" },
+      { error: "Error posting serivce plan:", e },
       { status: 500 }
     );
   }

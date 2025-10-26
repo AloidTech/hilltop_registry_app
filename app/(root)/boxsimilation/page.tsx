@@ -51,7 +51,7 @@ export default function BoxSimilation() {
       }
     }
   }, []);
-  useEffect(() => {
+ /* useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (!keys.has(e.key)) return;
       e.preventDefault();
@@ -70,7 +70,7 @@ export default function BoxSimilation() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, []);*/
 
   return (
     <div className="min-h-screen bg-[rgb(45,46,45)] flex items-center justify-center p-6">
@@ -86,12 +86,13 @@ export default function BoxSimilation() {
           }}
         >
           {Array.from({ length: COLS * ROWS }, (_, i) => {
-            var placed = placewall(i);
+            const [cx, cy] = placewall(i);
+            const isWall = walls.some(([wy, wx]) => wy === cy && wx === cx);
             return (
               <div
                 key={i}
                 className={`rounded-md  ${
-                  placed
+                  isWall
                     ? "bg-neutral-700/60 border border-neutral-700"
                     : "bg-amber-900 border-amber-700"
                 }`}

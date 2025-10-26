@@ -1,4 +1,3 @@
-// @ts-ignore: side-effect CSS import has no type declarations in this project
 import "../globals.css";
 import { NavBarDeskt, NavBarMobile } from "@/components/NavBar";
 

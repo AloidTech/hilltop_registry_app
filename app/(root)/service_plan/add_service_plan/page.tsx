@@ -226,7 +226,7 @@ function AddServicePlanPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [membersLoading, setMembersLoading] = useState(true);
-  const [anchorSearchTerm, setAnchorSearchTerm] = useState("");
+  // removed old global anchor search; each selector manages its own query
 
   const [formData, setFormData] = useState<ServicePlanForm>({
     date: "",
@@ -326,7 +326,7 @@ function AddServicePlanPage() {
     return newEndTime;
   };
 
-  const calculateTotalTime = () => {};
+  // removed unused calculateTotalTime helper
 
   const updateProgram = (
     index: number,
@@ -346,16 +346,7 @@ function AddServicePlanPage() {
     updateProgram(index, "TimePeriod", `${startTime} ~ ${endTime}`);
   };
 
-  const toggleAnchor = (programIndex: number, memberName: string) => {
-    const program = formData.programs[programIndex];
-    const isSelected = program.Anchors.includes(memberName);
-
-    const newAnchors = isSelected
-      ? program.Anchors.filter((name) => name !== memberName)
-      : [...program.Anchors, memberName];
-
-    updateProgram(programIndex, "Anchors", newAnchors);
-  };
+  // removed old toggleAnchor; using typed toggleAnchorField instead
 
   // Toggle selection for either Anchors or BackupAnchors
   const toggleAnchorField = (
@@ -364,7 +355,7 @@ function AddServicePlanPage() {
     name: string
   ) => {
     const program = formData.programs[programIndex];
-    const selected = (program as any)[field] as string[];
+    const selected = program[field];
     const exists = selected.some((n) => n.toLowerCase() === name.toLowerCase());
     const next = exists
       ? selected.filter((n) => n.toLowerCase() !== name.toLowerCase())
@@ -385,20 +376,17 @@ function AddServicePlanPage() {
     const programs = [...formData.programs];
     const p = { ...programs[programIndex] };
 
-    const selected = (p as any)[field] as string[];
+    const selected = p[field];
     const exists = selected.some((n) => n.toLowerCase() === name.toLowerCase());
     if (!exists) {
-      (p as any)[field] = [...selected, name];
+      p[field] = [...selected, name];
     }
 
     programs[programIndex] = p;
     setFormData({ ...formData, programs });
   };
 
-  // Filter members based on search term
-  const filteredMembers = members.filter((member) =>
-    member.name.toLowerCase().includes(anchorSearchTerm.toLowerCase())
-  );
+  // per-selector filtering handled within AnchorSelector
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -416,6 +404,7 @@ function AddServicePlanPage() {
     setLoading(true);
 
     try {
+
       const response = await fetch("/api/service_plan", {
         method: "POST",
         headers: {

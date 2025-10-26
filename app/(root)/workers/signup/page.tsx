@@ -19,13 +19,7 @@ const DUMMY_MEMBERS: Member[] = [
   { id: "5", name: "Carlos Rivera" },
 ];
 
-const DEPARTMENTS = [
-  "Worship",
-  "Youth",
-  "Outreach",
-  "Finance",
-  "Administration",
-];
+// Note: Departments UI is not used on this screen; remove to avoid unused-var warnings.
 
 type FormState = {
   memberId: string | null;
@@ -84,9 +78,6 @@ function SignupTab({
   onSubmit,
   onUseTest,
 }: SignupTabProps) {
-  const handleToggleDepartment = (dep: string) => {
-    onQueryChange(query, 1); // no-op to satisfy lint, real logic lives in parent
-  };
 
   return (
     <form
