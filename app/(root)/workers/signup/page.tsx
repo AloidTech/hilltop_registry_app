@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { BiSearch, BiX } from "react-icons/bi";
 import { AnimatePresence, motion } from "framer-motion";
 
-
 interface Member {
   id: string;
   name: string;
@@ -78,7 +77,6 @@ function SignupTab({
   onSubmit,
   onUseTest,
 }: SignupTabProps) {
-
   return (
     <form
       onSubmit={onSubmit}

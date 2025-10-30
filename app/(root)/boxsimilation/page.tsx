@@ -42,7 +42,7 @@ function placewall(i: number) {
   return [x, y];
 }
 
-export default function BoxSimilation() {
+/*export default function BoxSimilation() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const wallgrid = useMemo(() => {
     var grid = Array(COLS * ROWS).fill(false) as boolean[];
@@ -51,7 +51,7 @@ export default function BoxSimilation() {
       }
     }
   }, []);
- /* useEffect(() => {
+  /* useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (!keys.has(e.key)) return;
       e.preventDefault();
@@ -70,14 +70,14 @@ export default function BoxSimilation() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);*/
+  }, []);
 
   return (
     <div className="min-h-screen bg-[rgb(45,46,45)] flex items-center justify-center p-6">
       <div
         className={`relative rounded-xl border border-neutral-700 bg-neutral-800/60 p-4`}
       >
-        {/* Grid */}
+        {/* Grid *//*}
         <div
           className="grid gap-[6px]"
           style={{
@@ -101,7 +101,7 @@ export default function BoxSimilation() {
           })}
         </div>
 
-        {/* Player */}
+        {// Player }
         <motion.div
           aria-label="player"
           className="absolute top-4 left-4 rounded-md border border-blue-400/40 bg-blue-500/30 shadow-lg"
@@ -111,7 +111,7 @@ export default function BoxSimilation() {
           whileTap={{ scale: 0.95 }}
         />
 
-        {/* HUD */}
+        {// HUD }
         <div className="absolute -top-3 left-4 text-xs text-gray-300">
           Use arrows or WASD to move
         </div>
@@ -121,4 +121,4 @@ export default function BoxSimilation() {
       </div>
     </div>
   );
-}
+}*/

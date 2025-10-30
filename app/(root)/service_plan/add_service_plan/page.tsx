@@ -4,222 +4,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BsChevronDown, BsClock, BsPlus, BsTrash } from "react-icons/bs";
 import { FiSave, FiArrowLeft, FiCalendar } from "react-icons/fi";
 import { useRouter } from "next/navigation";
-
-interface Member {
-  id: string;
-  name: string;
-  email: string;
-  number: string | null;
-  parentNum: string | null;
-  role: string | null;
-  team: string | null;
-}
-
-interface ServicePlanProgram {
-  TimePeriod: string;
-  Program: string;
-  Anchors: string[];
-  BackupAnchors: string[];
-  // CustomAnchors: string[]; // removed: derive customs from selected vs members
-}
-
-interface ServicePlanForm {
-  date: string;
-  programs: ServicePlanProgram[];
-}
-
-const timeOptions = [
-  "7:00am",
-  "7:05am",
-  "7:10am",
-  "7:15am",
-  "7:20am",
-  "7:25am",
-  "7:30am",
-  "7:35am",
-  "7:40am",
-  "7:45am",
-  "7:50am",
-  "7:55am",
-  "8:00am",
-  "8:05am",
-  "8:10am",
-  "8:15am",
-  "8:20am",
-  "8:25am",
-  "8:30am",
-  "8:35am",
-  "8:40am",
-  "8:45am",
-  "8:50am",
-  "8:55am",
-  "9:00am",
-  "9:05am",
-  "9:10am",
-  "9:15am",
-  "9:20am",
-  "9:25am",
-  "9:30am",
-  "9:35am",
-  "9:40am",
-  "9:45am",
-  "9:50am",
-  "9:55am",
-  "10:00am",
-  "10:05am",
-  "10:10am",
-  "10:15am",
-  "10:20am",
-  "10:25am",
-  "10:30am",
-  "10:35am",
-  "10:40am",
-  "10:45am",
-  "10:50am",
-  "10:55am",
-  "11:00am",
-  "11:05am",
-  "11:10am",
-  "11:15am",
-  "11:20am",
-  "11:25am",
-  "11:30am",
-  "11:35am",
-  "11:40am",
-  "11:45am",
-  "11:50am",
-  "11:55am",
-  "12:00pm",
-  "12:05pm",
-  "12:10pm",
-  "12:15pm",
-  "12:20pm",
-  "12:25pm",
-  "12:30pm",
-];
-
-// Custom Time Picker Component
-interface TimePickerProps {
-  value: string;
-  onChange: (time: string) => void;
-  placeholder?: string;
-}
-
-const CustomTimePicker: React.FC<TimePickerProps> = ({
-  value,
-  onChange,
-  placeholder = "Select time",
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const listRef = useRef<HTMLDivElement | null>(null);
-
-  // Filter by search
-  const filtered = useMemo(
-    () =>
-      timeOptions.filter((t) =>
-        t.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [searchTerm]
-  );
-
-  // Reorder so the list STARTS at the currently picked time, wrapping around
-  const orderedOptions = useMemo(() => {
-    if (!value) return filtered;
-    const i = filtered.findIndex((t) => t === value);
-    if (i <= 0) return filtered;
-    return [...filtered.slice(i), ...filtered.slice(0, i)];
-  }, [filtered, value]);
-
-  // When opening, scroll the selected option into view
-  useEffect(() => {
-    if (!isOpen) return;
-    const id = requestAnimationFrame(() => {
-      const el = listRef.current?.querySelector<HTMLElement>(
-        `[data-time="${CSS.escape(value)}"]`
-      );
-      el?.scrollIntoView({ block: "nearest" });
-    });
-    return () => cancelAnimationFrame(id);
-  }, [isOpen, value]);
-
-  const handleSelect = (time: string) => {
-    onChange(time);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-2 bg-neutral-600 border border-neutral-500 rounded text-white focus:border-blue-500 focus:outline-none flex items-center justify-between hover:bg-neutral-550 transition-colors"
-      >
-        <span className={value ? "text-white" : "text-gray-400"}>
-          {value || placeholder}
-        </span>
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <BsChevronDown className="w-4 h-4 text-gray-400" />
-        </motion.div>
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 right-0 z-50 mt-1 bg-neutral-700 border border-neutral-600 rounded-lg shadow-xl max-h-60 overflow-hidden"
-          >
-            <div className="p-2 border-b border-neutral-600">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search time..."
-                className="w-full p-2 bg-neutral-600 border border-neutral-500 rounded text-white text-sm focus:border-blue-500 focus:outline-none"
-                autoFocus
-              />
-            </div>
-
-            <div ref={listRef} className="overflow-y-auto max-h-48">
-              {orderedOptions.length > 0 ? (
-                orderedOptions.map((time) => (
-                  <button
-                    key={time}
-                    data-time={time}
-                    type="button"
-                    onClick={() => handleSelect(time)}
-                    className={`w-full p-2 text-left hover:bg-neutral-600 transition-colors text-sm ${
-                      value === time
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-200 hover:text-white"
-                    }`}
-                  >
-                    {time}
-                  </button>
-                ))
-              ) : (
-                <div className="p-4 text-center text-gray-400 text-sm">
-                  No times found
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-      )}
-    </div>
-  );
-};
+import { CustomTimePicker } from "@/components/TimePicker";
+import {
+  Member,
+  ServicePlanProgram,
+  ServicePlanForm,
+  getNextEndTime,
+  splitTimePeriod,
+  joinTimePeriod,
+  toggleCaseInsensitive,
+  uniqueAnchorsCount,
+} from "@/lib/servicePlanUtils";
 
 function AddServicePlanPage() {
   const router = useRouter();
@@ -265,7 +60,8 @@ function AddServicePlanPage() {
 
   const addProgram = () => {
     const lastProgram = formData.programs.at(-1);
-    const endTime = lastProgram?.TimePeriod.split("~")[1] || "7:05am";
+    const endTime =
+      splitTimePeriod(lastProgram?.TimePeriod || "")[1] || "7:05am";
     const newStartTime = endTime;
     const newEndTime = getNextEndTime(endTime);
     setFormData({
@@ -273,7 +69,7 @@ function AddServicePlanPage() {
       programs: [
         ...formData.programs,
         {
-          TimePeriod: `${newStartTime} ~ ${newEndTime}`,
+          TimePeriod: joinTimePeriod(newStartTime, newEndTime),
           Program: "",
           Anchors: [],
           BackupAnchors: [],
@@ -290,41 +86,7 @@ function AddServicePlanPage() {
     });
   };
 
-  const getNextEndTime = (currentTime: string) => {
-    // currentTime examples: "7:05am", "12:30pm"
-    const parts = currentTime.split(":");
-    const hourPart = parts[0];
-    const minutePart = parts[1] || "";
-
-    // extract meridiem (am/pm) and numeric minute
-    const meridiemMatch = minutePart.match(/(am|pm)$/i);
-    const tOD = meridiemMatch ? meridiemMatch[1].toLowerCase() : "";
-    const minuteDigits = minutePart.replace(/[^0-9]/g, "");
-    const intMinute = parseInt(minuteDigits || "0", 10);
-
-    // parse hour as number
-    let hourNum = parseInt(hourPart, 10) || 0;
-    let newMinute = intMinute + 5;
-    let newTOD = tOD;
-
-    // handle minute overflow
-    if (newMinute >= 60) {
-      newMinute -= 60;
-      // increment hour using 12-hour wrap
-      hourNum = (hourNum % 12) + 1;
-      // flip meridiem when crossing 11->12 boundary
-      if (hourNum === 12) {
-        newTOD = tOD === "am" ? "pm" : tOD === "pm" ? "am" : tOD;
-      }
-    }
-
-    const newEndTime = `${hourNum}:${String(newMinute).padStart(
-      2,
-      "0"
-    )}${newTOD}`;
-    console.log("time of day: ", tOD, "minute: ", minutePart);
-    return newEndTime;
-  };
+  // moved getNextEndTime to utils
 
   // removed unused calculateTotalTime helper
 
@@ -343,7 +105,7 @@ function AddServicePlanPage() {
     startTime: string,
     endTime: string
   ) => {
-    updateProgram(index, "TimePeriod", `${startTime} ~ ${endTime}`);
+    updateProgram(index, "TimePeriod", joinTimePeriod(startTime, endTime));
   };
 
   // removed old toggleAnchor; using typed toggleAnchorField instead
@@ -356,10 +118,7 @@ function AddServicePlanPage() {
   ) => {
     const program = formData.programs[programIndex];
     const selected = program[field];
-    const exists = selected.some((n) => n.toLowerCase() === name.toLowerCase());
-    const next = exists
-      ? selected.filter((n) => n.toLowerCase() !== name.toLowerCase())
-      : [...selected, name];
+    const next = toggleCaseInsensitive(selected, name);
     updateProgram(programIndex, field, next);
   };
 
@@ -404,7 +163,6 @@ function AddServicePlanPage() {
     setLoading(true);
 
     try {
-
       const response = await fetch("/api/service_plan", {
         method: "POST",
         headers: {
@@ -658,10 +416,11 @@ function AddServicePlanPage() {
                       <div className="flex items-center gap-2">
                         <div className="flex-1">
                           <CustomTimePicker
-                            value={program.TimePeriod.split(" ~ ")[0]}
+                            value={splitTimePeriod(program.TimePeriod)[0]}
                             onChange={(time) => {
                               const endTime =
-                                program.TimePeriod.split(" ~ ")[1] || "7:05am";
+                                splitTimePeriod(program.TimePeriod)[1] ||
+                                "7:05am";
                               updateTimePeriod(index, time, endTime);
                             }}
                             placeholder="Start time"
@@ -671,11 +430,12 @@ function AddServicePlanPage() {
                         <div className="flex-1">
                           <CustomTimePicker
                             value={
-                              program.TimePeriod.split(" ~ ")[1] || "7:05am"
+                              splitTimePeriod(program.TimePeriod)[1] || "7:05am"
                             }
                             onChange={(time) => {
-                              const startTime =
-                                program.TimePeriod.split(" ~ ")[0];
+                              const startTime = splitTimePeriod(
+                                program.TimePeriod
+                              )[0];
                               updateTimePeriod(index, startTime, time);
                             }}
                             placeholder="End time"
