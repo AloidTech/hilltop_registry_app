@@ -1,4 +1,4 @@
-"use client";
+/*"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
@@ -42,7 +42,7 @@ function placewall(i: number) {
   return [x, y];
 }
 
-/*export default function BoxSimilation() {
+export default function BoxSimilation() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const wallgrid = useMemo(() => {
     var grid = Array(COLS * ROWS).fill(false) as boolean[];
