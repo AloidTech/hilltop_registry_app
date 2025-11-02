@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       const program = [plan["TimePeriod"], plan["Program"], anchorString, backAnchorString];
       plans.push(program);
     }
-    console.log(`Sheet Name: ${Date}\n Service Plan: ` + program);
+    console.log(`Sheet Name: ${Date}\n Service Plan: ` + plans);
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
       throw new Error(
