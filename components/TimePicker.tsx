@@ -52,7 +52,7 @@ export const CustomTimePicker: React.FC<TimePickerProps> = ({
   // Reorder so the list STARTS at the currently picked time, wrapping around
   const orderedOptions = useMemo(() => {
     if (!value) return filtered;
-    const i = filtered.findIndex((t: any) => t === value);
+    const i = filtered.findIndex((t: string) => t === value);
     if (i <= 0) return filtered;
     return [...filtered.slice(i), ...filtered.slice(0, i)];
   }, [filtered, value]);
@@ -115,7 +115,7 @@ export const CustomTimePicker: React.FC<TimePickerProps> = ({
 
             <div ref={listRef} className="overflow-y-auto max-h-48">
               {orderedOptions.length > 0 ? (
-                orderedOptions.map((time: any) => (
+                orderedOptions.map((time: string) => (
                   <button
                     key={time}
                     data-time={time}
