@@ -9,6 +9,7 @@ import {
 } from "react-icons/bs";
 import { FiUser, FiCalendar, FiEdit3, FiDownload } from "react-icons/fi";
 import { MdExpandMore, MdSwapHoriz } from "react-icons/md";
+import { useRouter } from "next/navigation";
 
 export interface ServicePlanProp {
   id: string;
@@ -23,6 +24,7 @@ export interface ServicePlanData {
 }
 
 function ServicePlanPage() {
+  const router = useRouter();
   const [plansLoading, setPlansLoading] = useState(true);
   const [ServicePlans, setServicePlans] = useState<ServicePlanData>({});
   const servicePlanDates = Object.keys(ServicePlans);
@@ -370,7 +372,12 @@ function ServicePlanPage() {
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       className="p-1.5 md:p-2 hover:bg-neutral-600 rounded-lg transition-colors"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(
+                          `/service_plan/edit/${encodeURIComponent(planDate)}`
+                        );
+                      }}
                     >
                       <FiEdit3 className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400" />
                     </motion.button>
@@ -468,8 +475,8 @@ function ServicePlanPage() {
                                     style={{ backfaceVisibility: "hidden" }}
                                   >
                                     {program.Anchors.map((anchor, idx) => (
-                                      <div 
-                                 //     onClick={()=> router.push("/member_info/")}
+                                      <div
+                                        //     onClick={()=> router.push("/member_info/")}
                                         key={idx}
                                         className="w-6 h-6 md:w-8 md:h-8 bg-neutral-600 rounded-full flex items-center justify-center text-white text-xs font-medium"
                                       >

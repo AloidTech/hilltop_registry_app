@@ -213,3 +213,126 @@ export async function GET() {
     );
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { originalDate, date, programs } = body;
+
+    if (!originalDate) {
+      return NextResponse.json(
+        { error: "Original date is required" },
+        { status: 400 }
+      );
+    }
+
+    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
+      throw new Error(
+        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set"
+      );
+    }
+    if (!spreadsheetId) {
+      throw new Error("GOOGLE_SPREADSHEET_ID environment variable is not set");
+    }
+
+    const private_key = Buffer.from(
+      process.env.GOOGLE_PRIVATE_KEY_BASE64,
+      "base64"
+    ).toString("utf8");
+
+    const auth = new JWT({
+      email: process.env.GOOGLE_CLIENT_EMAIL,
+      key: private_key?.replace(/\\n/g, "\n"),
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
+
+    const sheets = google.sheets({ version: "v4", auth });
+
+    // If date changed, rename the sheet
+    if (originalDate !== date) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [
+            {
+              updateSheetProperties: {
+                properties: {
+                  sheetId: await getSheetId(sheets, spreadsheetId, originalDate),
+                  title: date,
+                },
+                fields: "title",
+              },
+            },
+          ],
+        },
+      });
+    }
+
+    // Prepare data rows
+    const Headers = ["TimePeriod", "Program", "Anchors", "BackupAnchors"];
+    const plans = [Headers];
+
+    for (const plan of programs) {
+      const anchors = plan.Anchors;
+      const BackupAnchors = plan.BackupAnchors;
+      const anchorString = Array.isArray(anchors)
+        ? anchors.join(", ")
+        : anchors || "";
+      const backAnchorString = Array.isArray(BackupAnchors)
+        ? BackupAnchors.join(", ")
+        : BackupAnchors || "";
+      const program = [
+        plan.TimePeriod,
+        plan.Program,
+        anchorString,
+        backAnchorString,
+      ];
+      plans.push(program);
+    }
+
+    // Clear existing data and write new data
+    const sheetName = date;
+    await sheets.spreadsheets.values.clear({
+      spreadsheetId,
+      range: `${sheetName}!A:D`,
+    });
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${sheetName}!A1:D${plans.length}`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: plans,
+      },
+    });
+
+    // Invalidate cache by setting the key to undefined with zero TTL so it expires immediately
+    serverCache.set(CACHE_KEYS.SERVICE_PLANS, undefined, 0);
+
+    return NextResponse.json({
+      message: "Service plan updated successfully",
+      date: sheetName,
+    });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Unknown error";
+    console.error("Error updating service plan:", e);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+// Helper to get sheet ID by title
+async function getSheetId(
+  sheets: ReturnType<typeof google.sheets>,
+  spreadsheetId: string,
+  title: string
+): Promise<number> {
+  const meta = await sheets.spreadsheets.get({ spreadsheetId });
+  const sheet = meta.data.sheets?.find(
+    (s) => s.properties?.title === title
+  );
+  if (!sheet?.properties?.sheetId) {
+    throw new Error(`Sheet with title "${title}" not found`);
+  }
+  return sheet.properties.sheetId;
+}

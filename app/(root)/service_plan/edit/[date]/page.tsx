@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BsChevronDown, BsClock, BsPlus, BsTrash } from "react-icons/bs";
+import { BsClock, BsPlus, BsTrash } from "react-icons/bs";
 import { FiSave, FiArrowLeft, FiCalendar } from "react-icons/fi";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { CustomTimePicker } from "@/components/TimePicker";
 import {
   Member,
@@ -13,27 +13,22 @@ import {
   splitTimePeriod,
   joinTimePeriod,
   toggleCaseInsensitive,
-  uniqueAnchorsCount,
 } from "@/lib/servicePlanUtils";
 
-function AddServicePlanPage() {
+function EditServicePlanPage() {
   const router = useRouter();
+  const params = useParams();
+  const dateParam = params?.date as string;
+  const originalDate = decodeURIComponent(dateParam);
+
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [membersLoading, setMembersLoading] = useState(true);
-  // removed old global anchor search; each selector manages its own query
+  const [planLoading, setPlanLoading] = useState(true);
 
   const [formData, setFormData] = useState<ServicePlanForm>({
-    date: "",
-    programs: [
-      {
-        TimePeriod: "7:00am ~ 7:05am",
-        Program: "Opening Prayer",
-        Anchors: [],
-        BackupAnchors: [],
-        // CustomAnchors: [], // removed
-      },
-    ],
+    date: originalDate,
+    programs: [],
   });
 
   // Fetch members for anchors selection
@@ -43,7 +38,7 @@ function AddServicePlanPage() {
         const response = await fetch("/api/members");
         if (response.ok) {
           const data = await response.json();
-          console.log("✅ Members fetched:", data.source || "unknown"); // Log cache source
+          console.log("✅ Members fetched:", data.source || "unknown");
           setMembers(data.data || []);
         } else {
           console.error("Failed to fetch members");
@@ -57,6 +52,45 @@ function AddServicePlanPage() {
 
     fetchMembers();
   }, []);
+
+  // Fetch existing service plan data
+  useEffect(() => {
+    const fetchServicePlan = async () => {
+      try {
+        const response = await fetch("/api/service_plan");
+        if (response.ok) {
+          const data = await response.json();
+          const plans = data.data || {};
+          const existingPrograms = plans[originalDate] || [];
+
+          if (existingPrograms.length > 0) {
+            setFormData({
+              date: originalDate,
+              programs: existingPrograms.map((p: any) => ({
+                TimePeriod: p.TimePeriod,
+                Program: p.Program,
+                Anchors: p.Anchors || [],
+                BackupAnchors: p.BackupAnchors || [],
+              })),
+            });
+          } else {
+            alert("Service plan not found");
+            router.push("/service_plan");
+          }
+        } else {
+          console.error("Failed to fetch service plan");
+        }
+      } catch (error) {
+        console.error("Error fetching service plan:", error);
+      } finally {
+        setPlanLoading(false);
+      }
+    };
+
+    if (originalDate) {
+      fetchServicePlan();
+    }
+  }, [originalDate, router]);
 
   const addProgram = () => {
     const lastProgram = formData.programs.at(-1);
@@ -73,7 +107,6 @@ function AddServicePlanPage() {
           Program: "",
           Anchors: [],
           BackupAnchors: [],
-          // CustomAnchors: [], // removed
         },
       ],
     });
@@ -104,9 +137,6 @@ function AddServicePlanPage() {
     updateProgram(index, "TimePeriod", joinTimePeriod(startTime, endTime));
   };
 
-  // removed old toggleAnchor; using typed toggleAnchorField instead
-
-  // Toggle selection for either Anchors or BackupAnchors
   const toggleAnchorField = (
     programIndex: number,
     field: "Anchors" | "BackupAnchors",
@@ -119,7 +149,6 @@ function AddServicePlanPage() {
     )
       ? selected.filter((e: string) => e.toLowerCase() !== name.toLowerCase())
       : [...selected, name];
-    console.log("seleceted: " + selected);
     updateProgram(programIndex, field, next);
   };
 
@@ -144,8 +173,6 @@ function AddServicePlanPage() {
     setFormData({ ...formData, programs });
   };
 
-  // per-selector filtering handled within AnchorSelector
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -163,20 +190,23 @@ function AddServicePlanPage() {
 
     try {
       const response = await fetch("/api/service_plan", {
-        method: "POST",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          originalDate,
+          date: formData.date,
+          programs: formData.programs,
+        }),
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log("✅ Success:", result);
-        alert("Service plan added successfully!");
+        alert("Service plan updated successfully!");
         router.push("/service_plan");
       } else {
-        // Try to extract a useful error message from JSON or text
         let msg = "Request failed";
         try {
           const contentType = response.headers.get("content-type") || "";
@@ -187,7 +217,6 @@ function AddServicePlanPage() {
             msg = await response.text();
           }
         } catch (err) {
-          // ignore parse errors, fallback to status text
           msg = response.statusText || msg;
         }
         console.error("❌ Error:", msg);
@@ -195,14 +224,13 @@ function AddServicePlanPage() {
       }
     } catch (error) {
       console.error("❌ Network error:", error);
-      alert("Failed to add service plan");
+      alert("Failed to update service plan");
     } finally {
       setLoading(false);
     }
   };
 
-  // Show loading screen while members are being fetched
-  if (membersLoading) {
+  if (planLoading || membersLoading) {
     return (
       <div className="flex-1 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-">
         {/* Header Skeleton */}
@@ -217,85 +245,19 @@ function AddServicePlanPage() {
               <FiArrowLeft className="w-4 h-4" />
             </motion.button>
             <div>
-              <h1 className="text-white text-lg font-bold">Add Service Plan</h1>
-              <p className="text-gray-400 text-xs">
-                Create a new worship service schedule
-              </p>
+              <h1 className="text-white text-lg font-bold">
+                Edit Service Plan
+              </h1>
+              <p className="text-gray-400 text-xs">Loading service plan...</p>
             </div>
-          </div>
-
-          {/* Save Button in Header */}
-          <div className="flex gap-3">
-            <motion.button
-              type="submit"
-              form="service-plan-form"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
-            >
-              {loading ? (
-                <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                  />
-                  <span className="hidden md:inline">Saving...</span>
-                </>
-              ) : (
-                <>
-                  <FiSave className="w-4 h-4" />
-                  <span className="hidden md:inline">Save Plan</span>
-                </>
-              )}
-            </motion.button>
           </div>
         </motion.div>
 
-        {/* Form Skeleton */}
         <div className="space-y-6 pb-24">
-          {/* Date Selection Skeleton */}
           <div className="bg-neutral-700/30 backdrop-blur-sm p-4 rounded-xl border border-neutral-600/50">
             <div className="h-4 bg-neutral-600/50 rounded animate-pulse w-24 mb-3"></div>
             <div className="h-10 bg-neutral-600/30 rounded-lg animate-pulse"></div>
           </div>
-
-          {/* Programs Skeleton */}
-          <div className="space-y-4">
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="bg-neutral-700/30 backdrop-blur-sm p-4 rounded-xl border border-neutral-600/50"
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <div className="h-5 bg-neutral-600/50 rounded animate-pulse w-32"></div>
-                  <div className="h-8 w-8 bg-neutral-600/50 rounded-lg animate-pulse"></div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <div className="h-4 bg-neutral-600/50 rounded animate-pulse w-20"></div>
-                    <div className="h-10 bg-neutral-600/30 rounded-lg animate-pulse"></div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-neutral-600/50 rounded animate-pulse w-16"></div>
-                    <div className="h-10 bg-neutral-600/30 rounded-lg animate-pulse"></div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-neutral-600/50 rounded animate-pulse w-24"></div>
-                    <div className="h-32 bg-neutral-600/30 rounded-lg animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Add Program Button Skeleton */}
-          <div className="h-12 bg-neutral-600/30 rounded-xl animate-pulse"></div>
         </div>
       </div>
     );
@@ -316,10 +278,10 @@ function AddServicePlanPage() {
           </motion.button>
           <div className="min-w-0 flex-1">
             <h1 className="text-white text-base sm:text-lg font-bold truncate">
-              Add Service Plan
+              Edit Service Plan
             </h1>
             <p className="text-gray-400 text-[10px] sm:text-xs hidden sm:block">
-              Create a new worship service schedule
+              Update worship service schedule
             </p>
           </div>
         </div>
@@ -356,185 +318,178 @@ function AddServicePlanPage() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="space-y-3 sm:space-y-4"
+          className="bg-neutral-700/50 rounded-xl border border-neutral-600/50 overflow-hidden"
         >
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-neutral-600/50">
             <div className="flex items-center gap-2 sm:gap-3">
               <BsClock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
               <h3 className="text-white font-semibold text-base sm:text-lg">
                 Service Programs
               </h3>
             </div>
-            <span className="text-gray-400 text-xs sm:text-sm">
-              {formData.programs.length} program
-              {formData.programs.length !== 1 ? "s" : ""}
-            </span>
           </div>
 
-          <AnimatePresence>
-            {formData.programs.map((program, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="bg-neutral-700/50 rounded-xl p-3 sm:p-4 border-2 border-neutral-600/50 hover:border-neutral-500/70 transition-all shadow-lg"
-              >
-                <div className="flex items-start justify-between mb-3 sm:mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600/20 text-blue-400 font-bold text-sm border border-blue-500/30">
-                      {index + 1}
-                    </span>
-                    <h4 className="text-white font-semibold text-sm sm:text-base">
+          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+            <AnimatePresence>
+              {formData.programs.map((program, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="bg-neutral-800/30 rounded-lg p-3 sm:p-4 border border-neutral-600/30"
+                >
+                  <div className="flex items-start justify-between mb-3 sm:mb-4">
+                    <h4 className="text-white font-medium text-sm sm:text-base">
                       Program {index + 1}
                     </h4>
+                    {formData.programs.length > 1 && (
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => removeProgram(index)}
+                        className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors flex-shrink-0"
+                      >
+                        <BsTrash className="w-4 h-4 sm:w-4 sm:h-4" />
+                      </motion.button>
+                    )}
                   </div>
-                  {formData.programs.length > 1 && (
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => removeProgram(index)}
-                      className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors flex-shrink-0"
-                    >
-                      <BsTrash className="w-4 h-4 sm:w-4 sm:h-4" />
-                    </motion.button>
-                  )}
-                </div>
 
-                <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 mb-3 sm:mb-4">
-                  {/* Time Period */}
-                  <div>
-                    <label className="block text-gray-400 text-xs sm:text-sm mb-2 font-medium">
-                      Time Period
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <CustomTimePicker
-                          value={splitTimePeriod(program.TimePeriod)[0]}
-                          onChange={(time) => {
-                            const endTime =
-                              splitTimePeriod(program.TimePeriod)[1] ||
-                              "7:05am";
-                            updateTimePeriod(index, time, endTime);
-                          }}
-                          placeholder="Start time"
-                        />
+                  <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 mb-3 sm:mb-4">
+                    {/* Time Period */}
+                    <div>
+                      <label className="block text-gray-400 text-xs sm:text-sm mb-2 font-medium">
+                        Time Period
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <CustomTimePicker
+                            value={splitTimePeriod(program.TimePeriod)[0]}
+                            onChange={(time) => {
+                              const endTime =
+                                splitTimePeriod(program.TimePeriod)[1] ||
+                                "7:05am";
+                              updateTimePeriod(index, time, endTime);
+                            }}
+                            placeholder="Start time"
+                          />
+                        </div>
+                        <span className="text-gray-400 font-mono text-sm">
+                          ~
+                        </span>
+                        <div className="flex-1">
+                          <CustomTimePicker
+                            value={
+                              splitTimePeriod(program.TimePeriod)[1] || "7:05am"
+                            }
+                            onChange={(time) => {
+                              const startTime = splitTimePeriod(
+                                program.TimePeriod
+                              )[0];
+                              updateTimePeriod(index, startTime, time);
+                            }}
+                            placeholder="End time"
+                          />
+                        </div>
                       </div>
-                      <span className="text-gray-400 font-mono text-sm">~</span>
-                      <div className="flex-1">
-                        <CustomTimePicker
-                          value={
-                            splitTimePeriod(program.TimePeriod)[1] || "7:05am"
+                    </div>
+
+                    {/* Program Name */}
+                    <div>
+                      <label className="block text-gray-400 text-xs sm:text-sm mb-2 font-medium">
+                        Program Name
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={program.Program}
+                          onChange={(e) =>
+                            updateProgram(index, "Program", e.target.value)
                           }
-                          onChange={(time) => {
-                            const startTime = splitTimePeriod(
-                              program.TimePeriod
-                            )[0];
-                            updateTimePeriod(index, startTime, time);
-                          }}
-                          placeholder="End time"
+                          placeholder="e.g., Opening Prayer, Praise & Worship"
+                          className="w-full p-2.5 sm:p-2 pr-8 bg-neutral-600 border border-neutral-500 rounded text-white text-base sm:text-sm focus:border-blue-500 focus:outline-none"
+                          required
                         />
+                        {program.Program && (
+                          <button
+                            type="button"
+                            onClick={() => updateProgram(index, "Program", "")}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-neutral-500 rounded-full transition-colors text-lg sm:text-base"
+                            title="Clear"
+                          >
+                            ×
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Program Name */}
-                  <div>
-                    <label className="block text-gray-400 text-xs sm:text-sm mb-2 font-medium">
-                      Program Name
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={program.Program}
-                        onChange={(e) =>
-                          updateProgram(index, "Program", e.target.value)
-                        }
-                        placeholder="e.g., Opening Prayer, Praise & Worship"
-                        className="w-full p-2.5 sm:p-2 pr-8 bg-neutral-600 border border-neutral-500 rounded text-white text-base sm:text-sm focus:border-blue-500 focus:outline-none"
-                        required
-                      />
-                      {program.Program && (
-                        <button
-                          type="button"
-                          onClick={() => updateProgram(index, "Program", "")}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-neutral-500 rounded-full transition-colors text-lg sm:text-base"
-                          title="Clear"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4 sm:space-y-0 sm:flex-col sm:gap-5 md:flex">
-                  <AnchorSelector
-                    title="Anchors"
-                    members={members}
-                    membersLoading={membersLoading}
-                    selected={program.Anchors}
-                    // customAnchors={program.CustomAnchors}
-                    onToggle={(name) =>
-                      toggleAnchorField(index, "Anchors", name)
-                    }
-                    onAddCustom={() => addCustomAnchorTo(index, "Anchors")}
-                  />
-
-                  <div className="sm:mt-4 md:mt-0">
+                  <div className="space-y-4 sm:space-y-0 sm:flex-col sm:gap-5 md:flex">
                     <AnchorSelector
-                      title="Backup Anchors"
+                      title="Anchors"
                       members={members}
                       membersLoading={membersLoading}
-                      selected={program.BackupAnchors}
-                      // customAnchors={program.CustomAnchors}
+                      selected={program.Anchors}
                       onToggle={(name) =>
-                        toggleAnchorField(index, "BackupAnchors", name)
+                        toggleAnchorField(index, "Anchors", name)
                       }
-                      onAddCustom={() =>
-                        addCustomAnchorTo(index, "BackupAnchors")
-                      }
+                      onAddCustom={() => addCustomAnchorTo(index, "Anchors")}
                     />
+
+                    <div className="sm:mt-4 md:mt-0">
+                      <AnchorSelector
+                        title="Backup Anchors"
+                        members={members}
+                        membersLoading={membersLoading}
+                        selected={program.BackupAnchors}
+                        onToggle={(name) =>
+                          toggleAnchorField(index, "BackupAnchors", name)
+                        }
+                        onAddCustom={() =>
+                          addCustomAnchorTo(index, "BackupAnchors")
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
 
-          {/* Add Program Button */}
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={addProgram}
-            className="w-full flex items-center justify-center gap-2 p-4 bg-neutral-700/30 hover:bg-neutral-700/50 border-2 border-dashed border-neutral-500 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-xl transition-all duration-200"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <BsPlus className="w-6 h-6" />
-            <span className="font-medium">Add Another Program</span>
-          </motion.button>
+                  {/* Add Program Button - Show only on the last program */}
+                  {index === formData.programs.length - 1 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-4 pt-4 border-t border-neutral-600/30"
+                    >
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={addProgram}
+                        className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-neutral-500 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-500/5"
+                      >
+                        <BsPlus className="w-5 h-5" />
+                        <span>Add Another Program</span>
+                      </motion.button>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-          {/* Summary */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="bg-neutral-700/30 rounded-xl p-3 sm:p-4 border border-neutral-600/50"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
-              <span className="text-gray-400">
-                📅 Total Duration: ~{formData.programs.length * 10} minutes
-              </span>
-              <span className="text-gray-400">
-                👥 {new Set(formData.programs.flatMap((p) => p.Anchors)).size}{" "}
-                unique participants
-              </span>
+            {/* Summary */}
+            <div className="mt-4 pt-3 border-t border-neutral-600/50">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-sm">
+                <span className="text-gray-400">
+                  Total Duration: ~{formData.programs.length * 10} minutes
+                </span>
+                <span className="text-gray-400">
+                  {new Set(formData.programs.flatMap((p) => p.Anchors)).size}{" "}
+                  unique participants
+                </span>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </motion.div>
       </form>
 
@@ -570,30 +525,20 @@ function AnchorSelector(props: {
   members: Member[];
   membersLoading: boolean;
   selected: string[];
-  // customAnchors: string[];
   onToggle: (name: string) => void;
   onAddCustom: () => void;
 }) {
-  const {
-    title,
-    members,
-    membersLoading,
-    selected,
-    // customAnchors,
-    onToggle,
-    onAddCustom,
-  } = props;
+  const { title, members, membersLoading, selected, onToggle, onAddCustom } =
+    props;
   const [search, setSearch] = useState("");
 
-  const customFiltered: string[] = []; // customAnchors.filter((n) =>
-  // n.toLowerCase().includes(search.toLowerCase())
-  // );
+  const customFiltered: string[] = [];
   const customLower = new Set<string>(
     customFiltered.map((n) => n.toLowerCase())
   );
   const normalFiltered = members
     .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
-    .filter((m) => !customLower.has(m.name.toLowerCase())); // avoid duplicates
+    .filter((m) => !customLower.has(m.name.toLowerCase()));
 
   return (
     <div>
@@ -716,4 +661,4 @@ function AnchorSelector(props: {
   );
 }
 
-export default AddServicePlanPage;
+export default EditServicePlanPage;
