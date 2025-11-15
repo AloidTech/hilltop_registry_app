@@ -10,6 +10,12 @@ import { getAuth, type Auth } from "firebase-admin/auth";
 let adminApp: App;
 if (!getApps().length) {
   const firebase_private_key_bas64 = process.env.FIREBASE_PRIVATE_KEY_BASE64!;
+  if (!firebase_private_key_bas64) {
+    throw new Error(
+      "FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. " +
+        "Add it to your .env.local file."
+    );
+  }
   const firebase_private_key = Buffer.from(
     firebase_private_key_bas64,
     "base64"
