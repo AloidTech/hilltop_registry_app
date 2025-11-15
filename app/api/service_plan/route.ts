@@ -145,7 +145,7 @@ export async function GET() {
       spreadsheetId,
     });
 
-    const ranges = "!A:C";
+    const ranges = "!A:D";
     const sheetNames = meta.data.sheets
       ?.map((s) => s?.properties?.title ?? "")
       ?.slice(1);
@@ -179,7 +179,7 @@ export async function GET() {
           Anchors: row[2] ? row[2].split(", ") : [],
           BackupAnchors: row[3] ? row[3].split(", ") : [],
         }));
-
+        console.log("Data: ", programs);
         ServicePlans[date] = programs;
       }
     });
