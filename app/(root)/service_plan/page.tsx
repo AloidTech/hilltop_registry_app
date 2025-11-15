@@ -468,7 +468,8 @@ function ServicePlanPage() {
                                     style={{ backfaceVisibility: "hidden" }}
                                   >
                                     {program.Anchors.map((anchor, idx) => (
-                                      <div
+                                      <div 
+                                 //     onClick={()=> router.push("/member_info/")}
                                         key={idx}
                                         className="w-6 h-6 md:w-8 md:h-8 bg-neutral-600 rounded-full flex items-center justify-center text-white text-xs font-medium"
                                       >

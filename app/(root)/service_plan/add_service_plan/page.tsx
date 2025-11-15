@@ -86,10 +86,6 @@ function AddServicePlanPage() {
     });
   };
 
-  // moved getNextEndTime to utils
-
-  // removed unused calculateTotalTime helper
-
   const updateProgram = (
     index: number,
     field: keyof ServicePlanProgram,
@@ -118,12 +114,15 @@ function AddServicePlanPage() {
   ) => {
     const program = formData.programs[programIndex];
     const selected = program[field];
-    const next = toggleCaseInsensitive(selected, name);
+    const next = selected.some(
+      (e: string) => e.toLowerCase() === name.toLowerCase()
+    )
+      ? selected.filter((e: string) => e.toLowerCase() !== name.toLowerCase())
+      : [...selected, name];
+    console.log("seleceted: " + selected);
     updateProgram(programIndex, field, next);
   };
 
-  // Add a custom anchor by just selecting it in the target field.
-  // It will appear as "custom" because it's not in members.
   const addCustomAnchorTo = (
     programIndex: number,
     field: "Anchors" | "BackupAnchors"
@@ -177,9 +176,22 @@ function AddServicePlanPage() {
         alert("Service plan added successfully!");
         router.push("/service_plan");
       } else {
-        const error = await response.json();
-        console.error("❌ Error:", error);
-        alert(`Error: ${error.error}`);
+        // Try to extract a useful error message from JSON or text
+        let msg = "Request failed";
+        try {
+          const contentType = response.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const data = await response.json();
+            msg = data?.error || data?.message || msg;
+          } else {
+            msg = await response.text();
+          }
+        } catch (err) {
+          // ignore parse errors, fallback to status text
+          msg = response.statusText || msg;
+        }
+        console.error("❌ Error:", msg);
+        alert(`Error: ${msg}`);
       }
     } catch (error) {
       console.error("❌ Network error:", error);

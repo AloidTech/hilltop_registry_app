@@ -29,9 +29,14 @@ export async function POST(request: NextRequest) {
         ? anchors.join(", ")
         : anchors || "";
       const backAnchorString = Array.isArray(BackupAnchors)
-        ? anchors.join(", ")
-        : anchors || "";
-      const program = [plan["TimePeriod"], plan["Program"], anchorString, backAnchorString];
+        ? BackupAnchors.join(", ")
+        : BackupAnchors || "";
+      const program = [
+        plan["TimePeriod"],
+        plan["Program"],
+        anchorString,
+        backAnchorString,
+      ];
       plans.push(program);
     }
     console.log(`Sheet Name: ${Date}\n Service Plan: ` + plans);
@@ -78,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `${Date}!A:C`,
+      range: `${Date}!A:D`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: plans,
@@ -89,12 +94,10 @@ export async function POST(request: NextRequest) {
       message: "successfully created Service Plan",
       Date: response,
     });
-  } catch (e) {
-    console.error("Error posting serivce plan: ", e);
-    return NextResponse.json(
-      { error: "Error posting serivce plan:", e },
-      { status: 500 }
-    );
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Unknown error";
+    console.error("Error posting service plan: ", e);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -174,7 +177,7 @@ export async function GET() {
           TimePeriod: row[0] || "",
           Program: row[1] || "",
           Anchors: row[2] ? row[2].split(", ") : [],
-          BackupAnchors: row[3] ? row[2].split(", ") : [],
+          BackupAnchors: row[3] ? row[3].split(", ") : [],
         }));
 
         ServicePlans[date] = programs;
