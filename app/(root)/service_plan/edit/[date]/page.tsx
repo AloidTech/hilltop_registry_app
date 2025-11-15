@@ -60,13 +60,14 @@ function EditServicePlanPage() {
         const response = await fetch("/api/service_plan");
         if (response.ok) {
           const data = await response.json();
-          const plans: any = data.data || {};
+          const plans: { [key: string]: ServicePlanProgram[] } =
+            data.data || {};
           const existingPrograms = plans[originalDate] || [];
 
           if (existingPrograms.length > 0) {
             setFormData({
               date: originalDate,
-              programs: existingPrograms.map((p: any) => ({
+              programs: existingPrograms.map((p: ServicePlanProgram) => ({
                 TimePeriod: p.TimePeriod,
                 Program: p.Program,
                 Anchors: p.Anchors || [],
@@ -216,7 +217,7 @@ function EditServicePlanPage() {
           } else {
             msg = await response.text();
           }
-        } catch (err) {
+        } catch (_err) {
           msg = response.statusText || msg;
         }
         console.error("❌ Error:", msg);
@@ -290,7 +291,7 @@ function EditServicePlanPage() {
       <form
         id="service-plan-form"
         onSubmit={handleSubmit}
-        className="space-y-4 sm:space-y-6 pb-11"
+        className="space-y-4 sm:space-y-6 pb-28"
       >
         {/* Date Selection */}
         <motion.div
@@ -318,27 +319,25 @@ function EditServicePlanPage() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-neutral-700/50 rounded-xl border border-neutral-600/50 overflow-hidden"
         >
-          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-neutral-600/50">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <BsClock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
-              <h3 className="text-white font-semibold text-base sm:text-lg">
-                Service Programs
-              </h3>
-            </div>
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <BsClock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+            <h3 className="text-white font-semibold text-base sm:text-lg">
+              Service Programs
+            </h3>
           </div>
 
-          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <AnimatePresence>
               {formData.programs.map((program, index) => (
                 <motion.div
                   key={index}
+                  layout
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="bg-neutral-800/30 rounded-lg p-3 sm:p-4 border border-neutral-600/30"
+                  transition={{ duration: 0.3, type: "spring" }}
+                  className="bg-neutral-700/50 rounded-xl p-3 sm:p-4 border border-neutral-600/50"
                 >
                   <div className="flex items-start justify-between mb-3 sm:mb-4">
                     <h4 className="text-white font-medium text-sm sm:text-base">
@@ -350,7 +349,7 @@ function EditServicePlanPage() {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => removeProgram(index)}
-                        className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors flex-shrink-0"
+                        className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-full transition-colors flex-shrink-0"
                       >
                         <BsTrash className="w-4 h-4 sm:w-4 sm:h-4" />
                       </motion.button>
@@ -453,42 +452,48 @@ function EditServicePlanPage() {
                       />
                     </div>
                   </div>
-
-                  {/* Add Program Button - Show only on the last program */}
-                  {index === formData.programs.length - 1 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-4 pt-4 border-t border-neutral-600/30"
-                    >
-                      <motion.button
-                        type="button"
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={addProgram}
-                        className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-neutral-500 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-500/5"
-                      >
-                        <BsPlus className="w-5 h-5" />
-                        <span>Add Another Program</span>
-                      </motion.button>
-                    </motion.div>
-                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
 
-            {/* Summary */}
-            <div className="mt-4 pt-3 border-t border-neutral-600/50">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-sm">
-                <span className="text-gray-400">
-                  Total Duration: ~{formData.programs.length * 10} minutes
-                </span>
-                <span className="text-gray-400">
-                  {new Set(formData.programs.flatMap((p) => p.Anchors)).size}{" "}
-                  unique participants
-                </span>
-              </div>
-            </div>
+            {/* Add Program Button */}
+            <motion.div layout>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={addProgram}
+                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-neutral-500 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-500/5"
+              >
+                <BsPlus className="w-5 h-5" />
+                <span>Add Another Program</span>
+              </motion.button>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Summary */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-neutral-700/50 rounded-xl p-3 sm:p-4 border border-neutral-600/50"
+        >
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-sm">
+            <span className="text-gray-400">
+              Total Duration: ~{formData.programs.length * 5} minutes
+            </span>
+            <span className="text-gray-400">
+              {
+                new Set(
+                  formData.programs.flatMap((p) => [
+                    ...p.Anchors,
+                    ...p.BackupAnchors,
+                  ])
+                ).size
+              }{" "}
+              unique participants
+            </span>
           </div>
         </motion.div>
       </form>
