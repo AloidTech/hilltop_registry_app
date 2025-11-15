@@ -60,7 +60,7 @@ function EditServicePlanPage() {
         const response = await fetch("/api/service_plan");
         if (response.ok) {
           const data = await response.json();
-          const plans = data.data || {};
+          const plans: any = data.data || {};
           const existingPrograms = plans[originalDate] || [];
 
           if (existingPrograms.length > 0) {
