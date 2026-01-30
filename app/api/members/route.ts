@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import { JWT } from "google-auth-library";
 import { NextRequest, NextResponse } from "next/server";
 import { serverCache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
+import { adminDb } from "@/lib/serverapp";
 
 export async function DELETE(request: NextRequest) {
   console.log("Deleting member");
@@ -9,11 +10,31 @@ export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json();
     const memebers = body["members"];
-    // Get spreadsheet ID from environment variables
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    const org_id = body["org_id"];
+
+    // Get spreadsheet ID from environment variables OR org_id
+    let spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+
+    // Decode org_id if it's encoded
+    const clean_org_id = org_id ? decodeURIComponent(org_id).trim() : null;
+    console.log("Org id: ", org_id);
+    if (clean_org_id) {
+      const doc = await adminDb
+        .collection("organisations")
+        .doc(clean_org_id)
+        .get();
+      if (doc.exists) {
+        const data = doc.data();
+        const url = data?.registry_sheet?.url;
+        const match = url?.match(/\/d\/(.*?)(\/|$)/);
+        if (match && match[1]) {
+          spreadsheetId = match[1];
+        }
+      }
+    }
     if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
       throw new Error(
-        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set"
+        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set",
       );
     }
     if (!spreadsheetId) {
@@ -21,11 +42,11 @@ export async function DELETE(request: NextRequest) {
     }
     const private_key = Buffer.from(
       process.env.GOOGLE_PRIVATE_KEY_BASE64,
-      "base64"
+      "base64",
     ).toString("utf8");
 
     const auth = new JWT({
-      email: process.env.GOOGLE_CLIENT_EMAIL,
+      email: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_EMAIL,
       key: private_key?.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
@@ -74,17 +95,24 @@ export async function DELETE(request: NextRequest) {
     console.error("Error deleting members: ", e);
     return NextResponse.json(
       { error: "Failed to delete members" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   console.log("🚀 Members API route called");
 
   try {
+    const { searchParams } = new URL(request.url);
+    const org_id = searchParams.get("org_id");
+
+    const cacheKey = org_id
+      ? `${CACHE_KEYS.ALL_MEMBERS}_${org_id}`
+      : CACHE_KEYS.ALL_MEMBERS;
+
     // Check server cache first
-    const cachedMembers = serverCache.get(CACHE_KEYS.ALL_MEMBERS);
+    const cachedMembers = serverCache.get(cacheKey);
     if (cachedMembers) {
       console.log("✅ Returning cached members data");
       return NextResponse.json({
@@ -96,11 +124,29 @@ export async function GET() {
 
     console.log("📡 Fetching fresh members data from Google Sheets");
 
-    // Get spreadsheet ID from environment variables
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    // Get spreadsheet ID from environment variables OR org_id
+    let spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+
+    // Decode org_id if it's encoded
+    const clean_org_id = org_id ? decodeURIComponent(org_id).trim() : null;
+
+    if (clean_org_id) {
+      const doc = await adminDb
+        .collection("organisations")
+        .doc(clean_org_id)
+        .get();
+      if (doc.exists) {
+        const data = doc.data();
+        const url = data?.registry_sheet?.url;
+        const match = url?.match(/\/d\/(.*?)(\/|$)/);
+        if (match && match[1]) {
+          spreadsheetId = match[1];
+        }
+      }
+    }
     if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
       throw new Error(
-        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set"
+        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set",
       );
     }
     if (!spreadsheetId) {
@@ -108,11 +154,11 @@ export async function GET() {
     }
     const private_key = Buffer.from(
       process.env.GOOGLE_PRIVATE_KEY_BASE64,
-      "base64"
+      "base64",
     ).toString("utf8");
 
     const auth = new JWT({
-      email: process.env.GOOGLE_CLIENT_EMAIL,
+      email: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_EMAIL,
       key: private_key?.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     }); /*
@@ -149,7 +195,7 @@ export async function GET() {
       })) || [];
 
     // Cache the members data
-    serverCache.set(CACHE_KEYS.ALL_MEMBERS, members, CACHE_TTL.MEMBERS);
+    serverCache.set(cacheKey, members, CACHE_TTL.MEMBERS);
     console.log("💾 Members data cached for", CACHE_TTL.MEMBERS, "seconds");
     console.log("📡 Response received:", members, "rows: ", rows);
     return NextResponse.json({
@@ -161,7 +207,7 @@ export async function GET() {
     console.error("Error fetching members: ", e);
     return NextResponse.json(
       { error: "Failed to fetch members" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

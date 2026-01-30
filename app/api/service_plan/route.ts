@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import { JWT } from "google-auth-library";
 import { NextRequest, NextResponse } from "next/server";
 import { serverCache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
+import { adminDb } from "@/lib/serverapp";
 
 interface ServicePlanProp {
   id: string;
@@ -15,6 +16,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const Date = body["date"];
+    const org_id = body["org_id"];
     const Headers = Object.keys(body["programs"][0]);
 
     console.log("Headers", Headers);
@@ -40,10 +42,29 @@ export async function POST(request: NextRequest) {
       plans.push(program);
     }
     console.log(`Sheet Name: ${Date}\n Service Plan: ` + plans);
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    let spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+
+    // Decode org_id if it's encoded or contains extra characters
+    const clean_org_id = org_id ? decodeURIComponent(org_id).trim() : null;
+
+    if (clean_org_id) {
+      const doc = await adminDb
+        .collection("organisations")
+        .doc(clean_org_id)
+        .get();
+      if (doc.exists) {
+        const data = doc.data();
+        const url = data?.registry_sheet?.url;
+        const match = url?.match(/\/d\/(.*?)(\/|$)/);
+        if (match && match[1]) {
+          spreadsheetId = match[1];
+        }
+      }
+    }
+
     if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
       throw new Error(
-        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set"
+        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set",
       );
     }
     if (!spreadsheetId) {
@@ -51,11 +72,13 @@ export async function POST(request: NextRequest) {
     }
     const private_key = Buffer.from(
       process.env.GOOGLE_PRIVATE_KEY_BASE64,
-      "base64"
+      "base64",
     ).toString("utf8");
 
     const auth = new JWT({
-      email: process.env.GOOGLE_CLIENT_EMAIL,
+      email:
+        process.env.GOOGLE_CLIENT_EMAIL ||
+        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_EMAIL,
       key: private_key?.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
@@ -101,12 +124,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   console.log("🚀 Service Plans API route called");
 
   try {
+    const { searchParams } = new URL(request.url);
+    const org_id = searchParams.get("org_id");
+
+    const cacheKey = org_id
+      ? `${CACHE_KEYS.SERVICE_PLANS}_${org_id}`
+      : CACHE_KEYS.SERVICE_PLANS;
+
     // Check server cache first
-    const cachedPlans = serverCache.get(CACHE_KEYS.SERVICE_PLANS);
+    const cachedPlans = serverCache.get(cacheKey);
     if (cachedPlans) {
       console.log("✅ Returning cached service plan data");
       return NextResponse.json({
@@ -118,10 +148,37 @@ export async function GET() {
 
     console.log("📡 Fetching fresh service plan data from Google Sheets");
 
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    let spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+
+    // Decode org_id if it's encoded or contains extra characters
+    const clean_org_id = org_id ? decodeURIComponent(org_id).trim() : null;
+    console.log(`Processing org_id: '${org_id}', clean: '${clean_org_id}'`);
+
+    if (clean_org_id) {
+      try {
+        const doc = await adminDb
+          .collection("organisations")
+          .doc(clean_org_id)
+          .get();
+        if (doc.exists) {
+          const data = doc.data();
+          const url = data?.registry_sheet?.url;
+          const match = url?.match(/\/d\/(.*?)(\/|$)/);
+          if (match && match[1]) {
+            spreadsheetId = match[1];
+          }
+        } else {
+          console.warn(
+            `Organization document not found for id: ${clean_org_id}`,
+          );
+        }
+      } catch (error) {
+        console.error(`Error fetching organization doc: ${error}`);
+      }
+    }
     if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
       throw new Error(
-        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set"
+        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set",
       );
     }
     if (!spreadsheetId) {
@@ -129,11 +186,11 @@ export async function GET() {
     }
     const private_key = Buffer.from(
       process.env.GOOGLE_PRIVATE_KEY_BASE64,
-      "base64"
+      "base64",
     ).toString("utf8");
 
     const auth = new JWT({
-      email: process.env.GOOGLE_CLIENT_EMAIL,
+      email: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_EMAIL,
       key: private_key?.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
@@ -144,7 +201,7 @@ export async function GET() {
     const meta = await sheets.spreadsheets.get({
       spreadsheetId,
     });
-
+    console.log("Made it");
     const ranges = "!A:D";
     const sheetNames = meta.data.sheets
       ?.map((s) => s?.properties?.title ?? "")
@@ -187,15 +244,11 @@ export async function GET() {
     console.log("Final ServicePlans:", ServicePlans);
 
     // Cache the service plan data
-    serverCache.set(
-      CACHE_KEYS.SERVICE_PLANS,
-      ServicePlans,
-      CACHE_TTL.SERVICE_PLANS
-    );
+    serverCache.set(cacheKey, ServicePlans, CACHE_TTL.SERVICE_PLANS);
     console.log(
       "💾 Service plan data cached for",
       CACHE_TTL.SERVICE_PLANS,
-      "seconds"
+      "seconds",
     );
 
     return NextResponse.json({
@@ -207,9 +260,9 @@ export async function GET() {
     console.error("Failed to fetch service plan:", e);
     return NextResponse.json(
       {
-        error: "Failed to fetch service plan",
+        error: `Failed to fetch service plan: ${e instanceof Error ? e.message : String(e)}`,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -222,14 +275,14 @@ export async function PATCH(request: NextRequest) {
     if (!originalDate) {
       return NextResponse.json(
         { error: "Original date is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     if (!process.env.GOOGLE_PRIVATE_KEY_BASE64) {
       throw new Error(
-        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set"
+        "GOOGLE_PRIVATE_KEY_BASE64 environment variable is not set",
       );
     }
     if (!spreadsheetId) {
@@ -238,11 +291,13 @@ export async function PATCH(request: NextRequest) {
 
     const private_key = Buffer.from(
       process.env.GOOGLE_PRIVATE_KEY_BASE64,
-      "base64"
+      "base64",
     ).toString("utf8");
 
     const auth = new JWT({
-      email: process.env.GOOGLE_CLIENT_EMAIL,
+      email:
+        process.env.GOOGLE_CLIENT_EMAIL ||
+        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_EMAIL,
       key: private_key?.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
@@ -258,7 +313,11 @@ export async function PATCH(request: NextRequest) {
             {
               updateSheetProperties: {
                 properties: {
-                  sheetId: await getSheetId(sheets, spreadsheetId, originalDate),
+                  sheetId: await getSheetId(
+                    sheets,
+                    spreadsheetId,
+                    originalDate,
+                  ),
                   title: date,
                 },
                 fields: "title",
@@ -325,12 +384,10 @@ export async function PATCH(request: NextRequest) {
 async function getSheetId(
   sheets: ReturnType<typeof google.sheets>,
   spreadsheetId: string,
-  title: string
+  title: string,
 ): Promise<number> {
   const meta = await sheets.spreadsheets.get({ spreadsheetId });
-  const sheet = meta.data.sheets?.find(
-    (s) => s.properties?.title === title
-  );
+  const sheet = meta.data.sheets?.find((s) => s.properties?.title === title);
   if (!sheet?.properties?.sheetId) {
     throw new Error(`Sheet with title "${title}" not found`);
   }

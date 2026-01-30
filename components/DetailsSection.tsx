@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import {
   FiEdit3,
@@ -9,17 +11,122 @@ import {
   FiHome,
   FiCopy,
   FiCheck,
+  FiArrowLeft,
 } from "react-icons/fi";
 import { MdWork, MdVerified, MdPerson, MdGroup } from "react-icons/md";
-import { BiArrowBack } from "react-icons/bi";
-import { redirect } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Member } from "@/app/(root)/page";
 
 interface DetailsSectionProps {
   member: Member | null;
+  onClose?: () => void;
 }
+
+// Skeleton Loading Component
+const DetailsSkeleton = () => (
+  <div className="flex-1 p-6 lg:p-10 bg-[var(--bg-secondary)] h-full overflow-y-auto">
+    {/* Header Skeleton */}
+    <div className="flex justify-between items-center mb-6">
+      <div className="h-8 w-40 skeleton-shimmer rounded-lg" />
+      <div className="flex gap-2">
+        <div className="w-11 h-11 skeleton-shimmer rounded-xl" />
+        <div className="w-11 h-11 skeleton-shimmer rounded-xl" />
+      </div>
+    </div>
+
+    {/* Profile Card Skeleton */}
+    <div className="bg-[var(--bg-card)] rounded-2xl p-8 mb-6 border border-[var(--border-primary)]">
+      <div className="flex items-start gap-6">
+        <div className="w-28 h-28 skeleton-shimmer rounded-2xl" />
+        <div className="flex-1 space-y-4">
+          <div className="h-8 w-48 skeleton-shimmer rounded-lg" />
+          <div className="flex gap-3">
+            <div className="h-5 w-24 skeleton-shimmer rounded" />
+            <div className="h-5 w-20 skeleton-shimmer rounded" />
+          </div>
+          <div className="flex gap-3">
+            <div className="h-8 w-28 skeleton-shimmer rounded-full" />
+            <div className="h-8 w-20 skeleton-shimmer rounded-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Info Grid Skeleton */}
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="bg-[var(--bg-card)] rounded-xl p-6 border border-[var(--border-primary)]"
+        >
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 skeleton-shimmer rounded-lg" />
+            <div className="h-5 w-32 skeleton-shimmer rounded" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((j) => (
+              <div key={j} className="flex justify-between py-3">
+                <div className="h-4 w-20 skeleton-shimmer rounded" />
+                <div className="h-4 w-32 skeleton-shimmer rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// Mobile Skeleton
+const MobileDetailsSkeleton = () => (
+  <div className="flex-1 pb-12 px-4 bg-[var(--bg-secondary)] h-full overflow-y-auto">
+    {/* Header */}
+    <div className="flex justify-between items-center px-4 py-4 mb-6 bg-[var(--bg-card)] -mx-4 sticky top-0 z-10">
+      <div className="w-10 h-10 skeleton-shimmer rounded-xl" />
+      <div className="h-5 w-32 skeleton-shimmer rounded" />
+      <div className="w-10 h-10 skeleton-shimmer rounded-xl" />
+    </div>
+
+    {/* Profile Card */}
+    <div className="bg-[var(--bg-card)] rounded-2xl p-6 mb-6 border border-[var(--border-primary)]">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-20 h-20 skeleton-shimmer rounded-xl" />
+        <div className="flex-1 space-y-3">
+          <div className="h-6 w-36 skeleton-shimmer rounded" />
+          <div className="h-4 w-24 skeleton-shimmer rounded" />
+          <div className="flex gap-2">
+            <div className="h-6 w-16 skeleton-shimmer rounded-full" />
+            <div className="h-6 w-20 skeleton-shimmer rounded-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Info Sections */}
+    <div className="space-y-6">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="bg-[var(--bg-card)] rounded-xl p-5 border border-[var(--border-primary)]"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-5 h-5 skeleton-shimmer rounded" />
+            <div className="h-5 w-28 skeleton-shimmer rounded" />
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((j) => (
+              <div key={j} className="flex justify-between">
+                <div className="h-4 w-16 skeleton-shimmer rounded" />
+                <div className="h-4 w-28 skeleton-shimmer rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 // Reusable CopyableText component
 const CopyableText: React.FC<{
@@ -37,18 +144,15 @@ const CopyableText: React.FC<{
     if (!canCopy) return;
 
     try {
-      // Try modern clipboard API first
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } else {
-        // Fallback for older browsers or non-HTTPS contexts
         fallbackCopyTextToClipboard(text);
       }
     } catch (err) {
       console.error("Failed to copy text: ", err);
-      // Try fallback method if modern API fails
       fallbackCopyTextToClipboard(text);
     }
   };
@@ -56,8 +160,6 @@ const CopyableText: React.FC<{
   const fallbackCopyTextToClipboard = (text: string) => {
     const textArea = document.createElement("textarea");
     textArea.value = text;
-
-    // Avoid scrolling to bottom
     textArea.style.top = "0";
     textArea.style.left = "0";
     textArea.style.position = "fixed";
@@ -72,8 +174,6 @@ const CopyableText: React.FC<{
       if (successful) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      } else {
-        console.error("Fallback: Copy command failed");
       }
     } catch (err) {
       console.error("Fallback: Unable to copy", err);
@@ -85,22 +185,20 @@ const CopyableText: React.FC<{
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <span
-        className={`${
-          canCopy ? "cursor-pointer hover:text-blue-400 transition-colors" : ""
-        } ${className}`}
+        className={`${canCopy ? "cursor-pointer hover:text-indigo-400 transition-colors" : ""} ${className}`}
       >
         {displayText}
       </span>
       {canCopy && showIcon && (
         <button
           onClick={handleCopy}
-          className="p-1 hover:bg-neutral-600/50 rounded transition-colors group"
+          className="p-1 hover:bg-neutral-700/50 rounded transition-colors group"
           title="Copy to clipboard"
         >
           {copied ? (
             <FiCheck className="w-3 h-3 text-green-400" />
           ) : (
-            <FiCopy className="w-3 h-3 text-gray-400 group-hover:text-gray-200" />
+            <FiCopy className="w-3 h-3 text-neutral-500 group-hover:text-neutral-300" />
           )}
         </button>
       )}
@@ -108,26 +206,34 @@ const CopyableText: React.FC<{
   );
 };
 
-const DetailsSection: React.FC<DetailsSectionProps> = ({ member }) => {
+// Page Transition Animation (matching settings page)
+const pageTransition = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+  transition: { type: "spring" as const, stiffness: 300, damping: 30 },
+};
+
+// --- Desktop Details Section ---
+const DetailsSection: React.FC<DetailsSectionProps> = ({ member, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  if (isLoading) {
+    return <DetailsSkeleton />;
+  }
 
   if (!member) {
     return (
-      <div className="flex-1 p-10 hidden md:block  bg-neutral-800/30">
-        <div className="flex flex-col items-center justify-center h-full text-center">
-          <div className="mb-8 p-6 bg-neutral-700/50 rounded-full">
-            <Image
-              src="/logo1.png"
-              alt="Logo"
-              width={80}
-              height={80}
-              className="opacity-60"
-            />
+      <div className="flex-1 p-10 flex items-center justify-center bg-[var(--bg-secondary)] h-full">
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-8 p-6 bg-[var(--bg-card)] rounded-full border border-[var(--border-primary)]">
+            <FiUser className="w-16 h-16 text-neutral-600" />
           </div>
           <h2 className="text-white text-2xl font-semibold mb-3">
             Select a Member
           </h2>
-          <p className="text-neutral-400 text-base max-w-md">
+          <p className="text-neutral-500 text-base max-w-md">
             Choose a member from the list to view their detailed information,
             edit profile, and manage settings.
           </p>
@@ -137,326 +243,309 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ member }) => {
   }
 
   return (
-    <div className="flex-1 p-6 hidden md:block bg-neutral-800/30 overflow-y-auto">
-      <motion.div
-        key={member.id}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        {/* Header with Actions */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-white text-2xl font-bold">Member Profile</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="p-3 bg-blue-600 hover:bg-blue-700 rounded-xl transition-all duration-200 hover:scale-105"
-            >
-              <FiEdit3 className="w-4 h-4 text-white" />
-            </button>
-            <button className="p-3 bg-neutral-700 hover:bg-neutral-600 rounded-xl transition-all duration-200 hover:scale-105">
-              <FiMoreHorizontal className="w-4 h-4 text-gray-300" />
-            </button>
+    <motion.div
+      key={member.id}
+      {...pageTransition}
+      className="flex-1 p-6 lg:p-10 bg-[var(--bg-secondary)] overflow-y-auto h-full custom-scrollbar"
+    >
+      {/* Header with Actions */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-white text-2xl font-bold">Member Profile</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className="p-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all duration-200 hover:scale-105"
+          >
+            <FiEdit3 className="w-4 h-4 text-white" />
+          </button>
+          <button className="p-3 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-primary)] rounded-xl transition-all duration-200 hover:scale-105">
+            <FiMoreHorizontal className="w-4 h-4 text-neutral-400" />
+          </button>
+        </div>
+      </div>
+
+      {/* Profile Header */}
+      <div className="bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-elevated)] rounded-2xl p-8 mb-6 border border-[var(--border-primary)]">
+        <div className="flex items-start gap-6">
+          {/* Avatar */}
+          <div className="relative">
+            <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-1 border border-indigo-500/30">
+              <Image
+                src="/iron rank1.png"
+                width={108}
+                height={108}
+                alt={`${member.name} profile picture`}
+                className="rounded-2xl object-cover w-full h-full"
+              />
+            </div>
+            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-[var(--bg-card)] flex items-center justify-center">
+              <div className="w-3 h-3 bg-white rounded-full"></div>
+            </div>
+          </div>
+
+          {/* Basic Info */}
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <h2 className="text-white text-3xl font-bold capitalize">
+                {member.name}
+              </h2>
+              <MdVerified className="w-6 h-6 text-indigo-400" />
+            </div>
+
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-neutral-500 text-sm">ID: {member.id}</span>
+              <div className="w-1 h-1 bg-neutral-600 rounded-full"></div>
+              <span className="text-neutral-500 text-sm capitalize">
+                {member.sex || "Not specified"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="px-4 py-2 bg-green-600/20 text-green-400 rounded-full text-sm font-semibold flex items-center gap-2 border border-green-500/30">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                Active Member
+              </div>
+              <div className="px-4 py-2 bg-indigo-600/20 text-indigo-400 rounded-full text-sm font-semibold capitalize border border-indigo-500/30">
+                {member.role || "Member"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Information Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Contact Information */}
+        <div className="bg-[var(--bg-card)] rounded-xl p-6 border border-[var(--border-primary)]">
+          <h3 className="text-white font-bold text-lg mb-5 flex items-center gap-3">
+            <div className="p-2 bg-indigo-500/20 rounded-lg">
+              <FiUser className="w-5 h-5 text-indigo-400" />
+            </div>
+            Contact Details
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3 border-b border-[var(--border-secondary)]">
+              <div className="flex items-center gap-3">
+                <FiMail className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">Email</span>
+              </div>
+              <CopyableText
+                text={member.email || ""}
+                className="text-white text-sm font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between py-3 border-b border-[var(--border-secondary)]">
+              <div className="flex items-center gap-3">
+                <FiPhone className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">Phone</span>
+              </div>
+              <CopyableText
+                text={member.number || ""}
+                className="text-white text-sm font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center gap-3">
+                <FiHome className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">Address</span>
+              </div>
+              <CopyableText
+                text={member.houseAddress || ""}
+                className="text-white text-sm text-right max-w-48 truncate"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Profile Header */}
-        <div className="bg-gradient-to-br from-neutral-700/50 to-neutral-800/50 rounded-2xl p-8 mb-6 border border-neutral-600/30">
-          <div className="flex items-start gap-6">
-            {/* Avatar */}
-            <div className="relative">
-              <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-1 border border-blue-500/30">
-                <Image
-                  src="/iron rank1.png"
-                  width={108}
-                  height={108}
-                  alt={`${member.name} profile picture`}
-                  className="rounded-2xl object-cover w-full h-full"
-                />
-              </div>
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-neutral-700 flex items-center justify-center">
-                <div className="w-3 h-3 bg-white rounded-full"></div>
-              </div>
+        {/* Personal Information */}
+        <div className="bg-[var(--bg-card)] rounded-xl p-6 border border-[var(--border-primary)]">
+          <h3 className="text-white font-bold text-lg mb-5 flex items-center gap-3">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <MdPerson className="w-5 h-5 text-purple-400" />
             </div>
-
-            {/* Basic Info */}
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-white text-3xl font-bold capitalize">
-                  {member.name}
-                </h2>
-                <MdVerified className="w-6 h-6 text-blue-400" />
+            Personal Info
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3 border-b border-[var(--border-secondary)]">
+              <div className="flex items-center gap-3">
+                <FiCalendar className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">Birthday</span>
               </div>
+              <CopyableText
+                text={member.birthDay || ""}
+                className="text-white text-sm"
+                fallback="Not provided"
+              />
+            </div>
+            <div className="flex items-center justify-between py-3 border-b border-[var(--border-secondary)]">
+              <div className="flex items-center gap-3">
+                <MdPerson className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">Gender</span>
+              </div>
+              <CopyableText
+                text={member.sex || ""}
+                className="text-white text-sm capitalize"
+                fallback="Not specified"
+              />
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center gap-3">
+                <MdWork className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">Role</span>
+              </div>
+              <CopyableText
+                text={member.role || ""}
+                className="text-white text-sm capitalize"
+                fallback="Member"
+              />
+            </div>
+          </div>
+        </div>
 
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-gray-400 text-sm">ID: {member.id}</span>
-                <div className="w-1 h-1 bg-gray-500 rounded-full"></div>
-                <span className="text-gray-400 text-sm capitalize">
-                  {member.sex || "Not specified"}
+        {/* Guardian Information */}
+        <div className="bg-[var(--bg-card)] rounded-xl p-6 border border-[var(--border-primary)]">
+          <h3 className="text-white font-bold text-lg mb-5 flex items-center gap-3">
+            <div className="p-2 bg-green-500/20 rounded-lg">
+              <MdGroup className="w-5 h-5 text-green-400" />
+            </div>
+            Guardian Details
+          </h3>
+          <div className="space-y-4">
+            <div className="py-3 border-b border-[var(--border-secondary)]">
+              <div className="flex items-center gap-3 mb-3">
+                <FiUser className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">
+                  Male Guardian
                 </span>
               </div>
+              <div className="ml-7 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-500 text-sm">Name</span>
+                  <CopyableText
+                    text={member.maleGName || ""}
+                    className="text-white text-sm"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-500 text-sm">Phone</span>
+                  <CopyableText
+                    text={member.maleGNum || ""}
+                    className="text-white text-sm font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="py-3">
+              <div className="flex items-center gap-3 mb-3">
+                <FiUser className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">
+                  Female Guardian
+                </span>
+              </div>
+              <div className="ml-7 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-500 text-sm">Name</span>
+                  <CopyableText
+                    text={member.femaleGName || ""}
+                    className="text-white text-sm"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-500 text-sm">Phone</span>
+                  <CopyableText
+                    text={member.femaleGNum || ""}
+                    className="text-white text-sm font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        {/* Ministry Information */}
+        <div className="bg-[var(--bg-card)] rounded-xl p-6 border border-[var(--border-primary)]">
+          <h3 className="text-white font-bold text-lg mb-5 flex items-center gap-3">
+            <div className="p-2 bg-amber-500/20 rounded-lg">
+              <MdWork className="w-5 h-5 text-amber-400" />
+            </div>
+            Ministry Info
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3 border-b border-[var(--border-secondary)]">
               <div className="flex items-center gap-3">
-                <div className="px-4 py-2 bg-green-600/20 text-green-400 rounded-full text-sm font-semibold flex items-center gap-2 border border-green-500/30">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  Active Member
-                </div>
-                <div className="px-4 py-2 bg-blue-600/20 text-blue-400 rounded-full text-sm font-semibold capitalize">
-                  {member.role || "Member"}
-                </div>
+                <MdGroup className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">Team</span>
               </div>
+              <CopyableText
+                text={member.team ? `${member.team} Team` : ""}
+                className="text-white text-sm capitalize"
+                fallback="No team assigned"
+              />
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center gap-3">
+                <MdWork className="w-4 h-4 text-neutral-500" />
+                <span className="text-neutral-400 font-medium">Position</span>
+              </div>
+              <CopyableText
+                text={member.role || ""}
+                className="text-white text-sm capitalize"
+                fallback="Member"
+              />
             </div>
           </div>
         </div>
-
-        {/* Information Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Contact Information */}
-          <div className="bg-neutral-700/40 rounded-xl p-6 border border-neutral-600/30">
-            <h3 className="text-white font-bold text-lg mb-5 flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <FiUser className="w-5 h-5 text-blue-400" />
-              </div>
-              Contact Details
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-neutral-600/30">
-                <div className="flex items-center gap-3">
-                  <FiMail className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">Email</span>
-                </div>
-                <CopyableText
-                  text={member.email || ""}
-                  className="text-white text-sm font-mono"
-                />
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-neutral-600/30">
-                <div className="flex items-center gap-3">
-                  <FiPhone className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">Phone</span>
-                </div>
-                <CopyableText
-                  text={member.number || ""}
-                  className="text-white text-sm font-mono"
-                />
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <FiHome className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">Address</span>
-                </div>
-                <CopyableText
-                  text={member.houseAddress || ""}
-                  className="text-white text-sm text-right max-w-48 truncate"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Personal Information */}
-          <div className="bg-neutral-700/40 rounded-xl p-6 border border-neutral-600/30">
-            <h3 className="text-white font-bold text-lg mb-5 flex items-center gap-3">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <MdPerson className="w-5 h-5 text-purple-400" />
-              </div>
-              Personal Info
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-neutral-600/30">
-                <div className="flex items-center gap-3">
-                  <FiCalendar className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">Birthday</span>
-                </div>
-                <CopyableText
-                  text={member.birthDay || ""}
-                  className="text-white text-sm"
-                  fallback="Not provided"
-                />
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-neutral-600/30">
-                <div className="flex items-center gap-3">
-                  <MdPerson className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">Gender</span>
-                </div>
-                <CopyableText
-                  text={member.sex || ""}
-                  className="text-white text-sm capitalize"
-                  fallback="Not specified"
-                />
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <MdWork className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">Role</span>
-                </div>
-                <CopyableText
-                  text={member.role || ""}
-                  className="text-white text-sm capitalize"
-                  fallback="Member"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Guardian Information */}
-          <div className="bg-neutral-700/40 rounded-xl p-6 border border-neutral-600/30">
-            <h3 className="text-white font-bold text-lg mb-5 flex items-center gap-3">
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <MdGroup className="w-5 h-5 text-green-400" />
-              </div>
-              Guardian Details
-            </h3>
-            <div className="space-y-4">
-              <div className="py-3 border-b border-neutral-600/30">
-                <div className="flex items-center gap-3 mb-3">
-                  <FiUser className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">
-                    Male Guardian
-                  </span>
-                </div>
-                <div className="ml-7 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-400 text-sm">Name</span>
-                    <CopyableText
-                      text={member.maleGName || ""}
-                      className="text-white text-sm"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-400 text-sm">Phone</span>
-                    <CopyableText
-                      text={member.maleGNum || ""}
-                      className="text-white text-sm font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="py-3">
-                <div className="flex items-center gap-3 mb-3">
-                  <FiUser className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">
-                    Female Guardian
-                  </span>
-                </div>
-                <div className="ml-7 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-400 text-sm">Name</span>
-                    <CopyableText
-                      text={member.femaleGName || ""}
-                      className="text-white text-sm"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-400 text-sm">Phone</span>
-                    <CopyableText
-                      text={member.femaleGNum || ""}
-                      className="text-white text-sm font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Ministry Information */}
-          <div className="bg-neutral-700/40 rounded-xl p-6 border border-neutral-600/30">
-            <h3 className="text-white font-bold text-lg mb-5 flex items-center gap-3">
-              <div className="p-2 bg-orange-500/20 rounded-lg">
-                <MdWork className="w-5 h-5 text-orange-400" />
-              </div>
-              Ministry Info
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-neutral-600/30">
-                <div className="flex items-center gap-3">
-                  <MdGroup className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">Team</span>
-                </div>
-                <CopyableText
-                  text={member.team ? `${member.team} Team` : ""}
-                  className="text-white text-sm capitalize"
-                  fallback="No team assigned"
-                />
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <MdWork className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-300 font-medium">Position</span>
-                </div>
-                <CopyableText
-                  text={member.role || ""}
-                  className="text-white text-sm capitalize"
-                  fallback="Member"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
 };
 
+// --- Mobile Details Section ---
 export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
   member,
+  onClose,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   if (!member) {
-    return (
-      <div className="flex-1 p-10 bg-neutral-800/30 h-screen">
-        <div className="flex flex-col items-center justify-center h-full text-center">
-          <div className="mb-8 p-6 bg-neutral-700/50 rounded-full">
-            <Image
-              src="/logo1.png"
-              alt="Logo"
-              width={80}
-              height={80}
-              className="opacity-60"
-            />
-          </div>
-          <h2 className="text-white text-2xl font-semibold mb-3">
-            No member selected
-          </h2>
-          <p className="text-neutral-400 text-base max-w-md">
-            Choose a member from the members page to view their detailed
-            information.
-          </p>
-        </div>
-      </div>
-    );
+    return <MobileDetailsSkeleton />;
   }
 
   return (
     <motion.div
       key={member.id}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="flex-1 pb-12 px-4 bg-neutral-800/50 h-full overflow-y-auto"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="flex-1 pb-24 px-4 bg-[var(--bg-secondary)] h-full overflow-y-auto custom-scrollbar"
     >
       {/* Header */}
-      <div className="flex justify-between -mx-4 items-center px-4 py-4 mb-6 bg-neutral-800/80 sticky top-0 z-10">
+      <div className="flex justify-between -mx-4 items-center px-4 py-4 mb-6 bg-[var(--bg-card)]/90 sticky top-0 z-10 backdrop-blur-xl border-b border-[var(--border-primary)]">
         <button
-          onClick={() => redirect("/")}
-          className="p-2 bg-neutral-700 hover:bg-neutral-600 rounded-xl transition-colors"
+          onClick={() => onClose?.()}
+          className="p-2.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-primary)] rounded-xl transition-colors"
         >
-          <BiArrowBack className="w-5 h-5 text-gray-300" />
+          <FiArrowLeft className="w-5 h-5 text-neutral-400" />
         </button>
         <h1 className="text-white text-lg font-bold">Member Profile</h1>
         <button
           onClick={() => setIsEditing(!isEditing)}
-          className="p-2 bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+          className="p-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors"
         >
           <FiEdit3 className="w-4 h-4 text-white" />
         </button>
       </div>
 
       {/* Profile Header */}
-      <div className="bg-gradient-to-br from-neutral-700/50 to-neutral-800/50 rounded-2xl p-6 mb-6 border border-neutral-600/30">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-elevated)] rounded-2xl p-6 mb-6 border border-[var(--border-primary)]"
+      >
         <div className="flex items-center gap-4 mb-4">
           <div className="relative">
-            <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-1">
+            <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-1 border border-indigo-500/30">
               <Image
                 src="/iron rank1.png"
                 width={76}
@@ -465,37 +554,42 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
                 className="rounded-xl object-cover w-full h-full"
               />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-3 border-neutral-700"></div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-3 border-[var(--bg-card)]"></div>
           </div>
 
           <div className="flex-1">
             <h2 className="text-white text-xl font-bold capitalize mb-1">
               {member.name}
             </h2>
-            <p className="text-gray-400 text-sm mb-2">ID: {member.id}</p>
+            <p className="text-neutral-500 text-sm mb-2">ID: {member.id}</p>
             <div className="flex gap-2">
-              <div className="px-3 py-1 bg-green-600/20 text-green-400 rounded-full text-xs font-medium">
+              <div className="px-3 py-1 bg-green-600/20 text-green-400 rounded-full text-xs font-medium border border-green-500/30">
                 Active
               </div>
-              <div className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded-full text-xs font-medium capitalize">
+              <div className="px-3 py-1 bg-indigo-600/20 text-indigo-400 rounded-full text-xs font-medium capitalize border border-indigo-500/30">
                 {member.role || "Member"}
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Information Sections */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Contact Information */}
-        <div className="bg-neutral-700/40 rounded-xl p-5 border border-neutral-600/30">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-[var(--bg-card)] rounded-xl p-5 border border-[var(--border-primary)]"
+        >
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-            <FiUser className="w-4 h-4 text-blue-400" />
+            <FiUser className="w-4 h-4 text-indigo-400" />
             Contact Details
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-gray-300 text-sm">Email</span>
+              <span className="text-neutral-400 text-sm">Email</span>
               <CopyableText
                 text={member.email || ""}
                 className="text-white text-sm text-right max-w-40 truncate"
@@ -503,7 +597,7 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
               />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-300 text-sm">Phone</span>
+              <span className="text-neutral-400 text-sm">Phone</span>
               <CopyableText
                 text={member.number || ""}
                 className="text-white text-sm"
@@ -511,7 +605,7 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
               />
             </div>
             <div className="flex justify-between items-start">
-              <span className="text-gray-300 text-sm">Address</span>
+              <span className="text-neutral-400 text-sm">Address</span>
               <CopyableText
                 text={member.houseAddress || ""}
                 className="text-white text-sm text-right max-w-40"
@@ -519,17 +613,22 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Personal Information */}
-        <div className="bg-neutral-700/40 rounded-xl p-5 border border-neutral-600/30">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-[var(--bg-card)] rounded-xl p-5 border border-[var(--border-primary)]"
+        >
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <MdPerson className="w-4 h-4 text-purple-400" />
             Personal Info
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-gray-300 text-sm">Birthday</span>
+              <span className="text-neutral-400 text-sm">Birthday</span>
               <CopyableText
                 text={member.birthDay || ""}
                 className="text-white text-sm"
@@ -538,7 +637,7 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
               />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-300 text-sm">Gender</span>
+              <span className="text-neutral-400 text-sm">Gender</span>
               <CopyableText
                 text={member.sex || ""}
                 className="text-white text-sm capitalize"
@@ -547,7 +646,7 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
               />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-300 text-sm">Team</span>
+              <span className="text-neutral-400 text-sm">Team</span>
               <CopyableText
                 text={member.team ? `${member.team} Team` : ""}
                 className="text-white text-sm capitalize"
@@ -556,22 +655,27 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Guardian Information */}
-        <div className="bg-neutral-700/40 rounded-xl p-5 border border-neutral-600/30">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-[var(--bg-card)] rounded-xl p-5 border border-[var(--border-primary)]"
+        >
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <MdGroup className="w-4 h-4 text-green-400" />
             Guardian Details
           </h3>
           <div className="space-y-4">
-            <div className="border-b border-neutral-600/30 pb-3">
-              <span className="text-gray-300 text-sm font-medium block mb-3">
+            <div className="border-b border-[var(--border-secondary)] pb-3">
+              <span className="text-neutral-400 text-sm font-medium block mb-3">
                 Male Guardian
               </span>
               <div className="space-y-2 ml-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-xs">Name</span>
+                  <span className="text-neutral-500 text-xs">Name</span>
                   <CopyableText
                     text={member.maleGName || ""}
                     className="text-white text-sm text-right max-w-32 truncate"
@@ -579,7 +683,7 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
                   />
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-xs">Phone</span>
+                  <span className="text-neutral-500 text-xs">Phone</span>
                   <CopyableText
                     text={member.maleGNum || ""}
                     className="text-white text-sm font-mono"
@@ -589,12 +693,12 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
               </div>
             </div>
             <div>
-              <span className="text-gray-300 text-sm font-medium block mb-3">
+              <span className="text-neutral-400 text-sm font-medium block mb-3">
                 Female Guardian
               </span>
               <div className="space-y-2 ml-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-xs">Name</span>
+                  <span className="text-neutral-500 text-xs">Name</span>
                   <CopyableText
                     text={member.femaleGName || ""}
                     className="text-white text-sm text-right max-w-32 truncate"
@@ -602,7 +706,7 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
                   />
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-xs">Phone</span>
+                  <span className="text-neutral-500 text-xs">Phone</span>
                   <CopyableText
                     text={member.femaleGNum || ""}
                     className="text-white text-sm font-mono"
@@ -612,11 +716,9 @@ export const DetailsSectionMobile: React.FC<DetailsSectionProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
-      
     </motion.div>
-    
   );
 };
 

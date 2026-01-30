@@ -12,7 +12,7 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth";
 // Adjust import if you use a different path/alias
-import { auth } from "../../clientApp";
+import { auth } from "../../../lib/clientApp";
 
 type Errors = {
   email?: string;

@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BsChevronDown, BsClock, BsPlus, BsTrash } from "react-icons/bs";
 import { FiSave, FiArrowLeft, FiCalendar } from "react-icons/fi";
 import { useRouter } from "next/navigation";
+import { useOrgStore } from "@/lib/store";
+import { OrgSelectionModal } from "@/components/OrgSelectionModal";
 import { CustomTimePicker } from "@/components/TimePicker";
 import {
   Member,
@@ -18,6 +20,8 @@ import {
 
 function AddServicePlanPage() {
   const router = useRouter();
+  const { selectedOrg } = useOrgStore();
+  const [showOrgModal, setShowOrgModal] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [membersLoading, setMembersLoading] = useState(true);
@@ -38,9 +42,20 @@ function AddServicePlanPage() {
 
   // Fetch members for anchors selection
   useEffect(() => {
+    // Check if organisation is selected
+    if (!selectedOrg) {
+      setShowOrgModal(true);
+      setMembersLoading(false);
+      return;
+    }
+
+    // Reset modal if org is selected
+    setShowOrgModal(false);
+
     const fetchMembers = async () => {
+      setMembersLoading(true);
       try {
-        const response = await fetch("/api/members");
+        const response = await fetch(`/api/members?org_id=${selectedOrg.id}`);
         if (response.ok) {
           const data = await response.json();
           console.log("✅ Members fetched:", data.source || "unknown"); // Log cache source
@@ -56,7 +71,7 @@ function AddServicePlanPage() {
     };
 
     fetchMembers();
-  }, []);
+  }, [selectedOrg]);
 
   const addProgram = () => {
     const lastProgram = formData.programs.at(-1);
@@ -89,7 +104,7 @@ function AddServicePlanPage() {
   const updateProgram = (
     index: number,
     field: keyof ServicePlanProgram,
-    value: string | string[]
+    value: string | string[],
   ) => {
     const updatedPrograms = [...formData.programs];
     updatedPrograms[index] = { ...updatedPrograms[index], [field]: value };
@@ -99,7 +114,7 @@ function AddServicePlanPage() {
   const updateTimePeriod = (
     index: number,
     startTime: string,
-    endTime: string
+    endTime: string,
   ) => {
     updateProgram(index, "TimePeriod", joinTimePeriod(startTime, endTime));
   };
@@ -110,12 +125,12 @@ function AddServicePlanPage() {
   const toggleAnchorField = (
     programIndex: number,
     field: "Anchors" | "BackupAnchors",
-    name: string
+    name: string,
   ) => {
     const program = formData.programs[programIndex];
     const selected = program[field];
     const next = selected.some(
-      (e: string) => e.toLowerCase() === name.toLowerCase()
+      (e: string) => e.toLowerCase() === name.toLowerCase(),
     )
       ? selected.filter((e: string) => e.toLowerCase() !== name.toLowerCase())
       : [...selected, name];
@@ -125,7 +140,7 @@ function AddServicePlanPage() {
 
   const addCustomAnchorTo = (
     programIndex: number,
-    field: "Anchors" | "BackupAnchors"
+    field: "Anchors" | "BackupAnchors",
   ) => {
     const input = window.prompt("Enter anchor name");
     const name = (input ?? "").trim();
@@ -167,7 +182,7 @@ function AddServicePlanPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, org_id: selectedOrg?.id }),
       });
 
       if (response.ok) {
@@ -200,6 +215,12 @@ function AddServicePlanPage() {
       setLoading(false);
     }
   };
+
+  if (showOrgModal) {
+    return (
+      <OrgSelectionModal isOpen={true} mustSelect={true} onClose={() => {}} />
+    );
+  }
 
   // Show loading screen while members are being fetched
   if (membersLoading) {
@@ -430,7 +451,7 @@ function AddServicePlanPage() {
                           }
                           onChange={(time) => {
                             const startTime = splitTimePeriod(
-                              program.TimePeriod
+                              program.TimePeriod,
                             )[0];
                             updateTimePeriod(index, startTime, time);
                           }}
@@ -589,7 +610,7 @@ function AnchorSelector(props: {
   // n.toLowerCase().includes(search.toLowerCase())
   // );
   const customLower = new Set<string>(
-    customFiltered.map((n) => n.toLowerCase())
+    customFiltered.map((n) => n.toLowerCase()),
   );
   const normalFiltered = members
     .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
@@ -647,7 +668,7 @@ function AnchorSelector(props: {
                 <input
                   type="checkbox"
                   checked={selected.some(
-                    (n) => n.toLowerCase() === name.toLowerCase()
+                    (n) => n.toLowerCase() === name.toLowerCase(),
                   )}
                   onChange={() => onToggle(name)}
                   className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
@@ -668,7 +689,7 @@ function AnchorSelector(props: {
                 <input
                   type="checkbox"
                   checked={selected.some(
-                    (n) => n.toLowerCase() === m.name.toLowerCase()
+                    (n) => n.toLowerCase() === m.name.toLowerCase(),
                   )}
                   onChange={() => onToggle(m.name)}
                   className="w-5 h-5 sm:w-4 sm:h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500 flex-shrink-0"

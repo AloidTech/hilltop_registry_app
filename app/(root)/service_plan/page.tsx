@@ -10,6 +10,8 @@ import {
 import { FiUser, FiCalendar, FiEdit3, FiDownload } from "react-icons/fi";
 import { MdExpandMore, MdSwapHoriz } from "react-icons/md";
 import { useRouter } from "next/navigation";
+import { useOrgStore } from "@/lib/store";
+import { OrgSelectionModal } from "@/components/OrgSelectionModal";
 
 export interface ServicePlanProp {
   id: string;
@@ -25,6 +27,8 @@ export interface ServicePlanData {
 
 function ServicePlanPage() {
   const router = useRouter();
+  const { selectedOrg } = useOrgStore();
+  const [showOrgModal, setShowOrgModal] = useState(false);
   const [plansLoading, setPlansLoading] = useState(true);
   const [ServicePlans, setServicePlans] = useState<ServicePlanData>({});
   const servicePlanDates = Object.keys(ServicePlans);
@@ -32,9 +36,22 @@ function ServicePlanPage() {
   const [showBackups, setShowBackups] = useState<Record<string, boolean>>({}); // <— per-date toggle
 
   useEffect(() => {
+    // Check if organisation is selected
+    if (!selectedOrg) {
+      setShowOrgModal(true);
+      setPlansLoading(false);
+      return;
+    }
+
+    // Reset modal if org is selected
+    setShowOrgModal(false);
+
     const fetchServicePlans = async () => {
+      setPlansLoading(true);
       try {
-        const response = await fetch("/api/service_plan");
+        const response = await fetch(
+          `/api/service_plan?org_id=${selectedOrg.id}`,
+        );
         if (response.ok) {
           const data = await response.json();
           console.log("Fetched data:", data);
@@ -46,7 +63,11 @@ function ServicePlanPage() {
             setExpandedPlan(dates[0]);
           }
         } else {
-          console.error("Failed to fetch service plans");
+          const errorText = await response.text();
+          console.error(
+            `Failed to fetch service plans: ${response.status} ${response.statusText}`,
+            errorText,
+          );
         }
       } catch (e) {
         console.error("Error fetching service plans:", e);
@@ -56,7 +77,13 @@ function ServicePlanPage() {
     };
 
     fetchServicePlans();
-  }, []);
+  }, [selectedOrg]);
+
+  if (showOrgModal) {
+    return (
+      <OrgSelectionModal isOpen={true} mustSelect={true} onClose={() => {}} />
+    );
+  }
 
   const toggleExpanded = (planDate: string) => {
     setExpandedPlan(expandedPlan === planDate ? null : planDate);
@@ -81,12 +108,12 @@ function ServicePlanPage() {
   // Calculate total programs across all plans
   const totalPrograms = Object.values(ServicePlans).reduce(
     (total, programs) => total + programs.length,
-    0
+    0,
   );
 
   // Calculate unique participants
   const allAnchors = Object.values(ServicePlans).flatMap((programs) =>
-    programs.flatMap((p) => p.Anchors)
+    programs.flatMap((p) => p.Anchors),
   );
   const uniqueParticipants = new Set(allAnchors).size;
 
@@ -341,7 +368,7 @@ function ServicePlanPage() {
                   {/* Status Badge */}
                   <span
                     className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                      index
+                      index,
                     )}`}
                   >
                     {getStatusText(index)}
@@ -375,7 +402,7 @@ function ServicePlanPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         router.push(
-                          `/service_plan/edit/${encodeURIComponent(planDate)}`
+                          `/service_plan/edit/${encodeURIComponent(planDate)}`,
                         );
                       }}
                     >
@@ -408,7 +435,7 @@ function ServicePlanPage() {
                         {ServicePlans[planDate].map((program, programIndex) => {
                           const isBackup = !!showBackups[planDate];
                           const anchorsList = isBackup
-                            ? program.BackupAnchors ?? []
+                            ? (program.BackupAnchors ?? [])
                             : program.Anchors;
 
                           return (
@@ -449,8 +476,8 @@ function ServicePlanPage() {
                                       {anchorsList.length
                                         ? anchorsList.join(", ")
                                         : isBackup
-                                        ? "No backup anchors assigned"
-                                        : "No anchors assigned"}
+                                          ? "No backup anchors assigned"
+                                          : "No anchors assigned"}
                                     </span>
                                   </div>
                                 </div>
@@ -506,7 +533,7 @@ function ServicePlanPage() {
                                         >
                                           {anchor.charAt(0).toUpperCase()}
                                         </div>
-                                      )
+                                      ),
                                     )}
                                     {!(program.BackupAnchors ?? []).length && (
                                       <span className="text-xs text-purple-300">
@@ -531,7 +558,9 @@ function ServicePlanPage() {
                           <span className="text-gray-400">
                             {
                               new Set(
-                                ServicePlans[planDate].flatMap((p) => p.Anchors)
+                                ServicePlans[planDate].flatMap(
+                                  (p) => p.Anchors,
+                                ),
                               ).size
                             }{" "}
                             participants

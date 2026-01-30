@@ -12,7 +12,7 @@ if (!getApps().length) {
   const firebase_private_key_bas64 = process.env.FIREBASE_PRIVATE_KEY_BASE64!;
   if (!firebase_private_key_bas64) {
     throw new Error(
-      "FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. " +
+      "FIREBASE_PRIVATE_KEY_BASE64 environment variable is not set. " +
         "Add it to your .env.local file."
     );
   }
@@ -20,6 +20,7 @@ if (!getApps().length) {
     firebase_private_key_bas64,
     "base64"
   ).toString("utf8");
+  console.log("private_key: ", firebase_private_key);
   adminApp = initializeApp({
     credential: cert({
       projectId: process.env.FIREBASE_PROJECT_ID!,

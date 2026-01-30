@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb, AdminFieldValue } from "@/app/serverapp";
+import { adminAuth, adminDb, AdminFieldValue } from "@/lib/serverapp";
 
 type SignupBody = {
   name: string;
@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
       user_id: user.uid,
       name: name.trim(),
       email: email.trim(),
+      spreadSheetId: "",
       createdAt: AdminFieldValue.serverTimestamp(),
     });
 
