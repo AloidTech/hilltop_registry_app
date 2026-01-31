@@ -37,7 +37,7 @@ export default function CreateOrganizationPage() {
       if (!user) {
         router.push("/auth/login");
       } else {
-        checkProfile(user, router).finally(() => {
+        checkProfile(user).finally(() => {
           setLoading(false);
         });
       }

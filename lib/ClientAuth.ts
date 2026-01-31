@@ -33,11 +33,11 @@ export const AuthContextProvider = ({
   return React.createElement(
     AuthContext.Provider,
     { value: { user, loading } },
-    children
+    children,
   );
 };
 
-export async function checkProfile(user: User, router: any) {
+export async function checkProfile(user: User) {
   if (!user) return;
 
   try {

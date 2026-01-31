@@ -1,25 +1,26 @@
 import React from "react";
 import {
-  FaBuilding,
   FaFileAlt,
   FaLink,
-  FaGoogle,
-  FaArrowRight,
-  FaArrowLeft,
-  FaExternalLinkAlt,
   FaInfoCircle,
-  FaSpinner,
   FaCopy,
   FaCheck,
 } from "react-icons/fa";
+
+interface FormData {
+  name: string;
+  registrySheetName: string;
+  registryFormUrl: string;
+  registrySheetUrl: string;
+}
 
 const OrganisationSlides = ({
   formData,
   handleChange,
   step,
 }: {
-  formData: any;
-  handleChange: any;
+  formData: FormData;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   step: number;
 }) => {
   return (
@@ -44,8 +45,8 @@ const Slide1 = ({
   formData,
   handleChange,
 }: {
-  formData: any;
-  handleChange: any;
+  formData: FormData;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -54,7 +55,7 @@ const Slide1 = ({
           Organization Details
         </h2>
         <p className="text-neutral-400 text-sm">
-          Let's start with the basics. What is your organization called?
+          Let&apos;s start with the basics. What is your organization called?
         </p>
       </div>
 
@@ -101,8 +102,8 @@ const Slide2 = ({
   formData,
   handleChange,
 }: {
-  formData: any;
-  handleChange: any;
+  formData: FormData;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) => {
   const [copied, setCopied] = React.useState(false);
   // TODO: Replace with your actual service account email or fetch from an API if needed
