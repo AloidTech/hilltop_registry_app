@@ -11,8 +11,6 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import Link from "next/link";
-import { IoArrowBackCircle } from "react-icons/io5";
-import { BiArrowBack } from "react-icons/bi";
 
 export default function CreateOrganizationPage() {
   // 1. Auth & Router Hooks
@@ -81,8 +79,10 @@ export default function CreateOrganizationPage() {
         );
         alert(`Error: ${error.error || "Failed to create organization"}`);
       }
-    } catch (error: any) {
-      console.error("Submission error:", error.error || error || error.message);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error("Submission error:", errorMessage);
       alert("An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);

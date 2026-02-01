@@ -47,7 +47,14 @@ const DesktopMenuItem = ({
   onClick,
   active = false,
   danger = false,
-}: any) => (
+}: {
+  icon: React.ComponentType<{ size: number }>;
+  label: string;
+  description?: string;
+  onClick: () => void;
+  active?: boolean;
+  danger?: boolean;
+}) => (
   <button
     onClick={onClick}
     className={`w-full flex items-center gap-4 px-4 py-3 transition-colors rounded-lg ${
@@ -131,7 +138,17 @@ const MobileHeader = ({
   </div>
 );
 
-const StatBox = ({ icon: Icon, label, value, active }: any) => (
+const StatBox = ({
+  icon: Icon,
+  label,
+  value,
+  active,
+}: {
+  icon: React.ComponentType<{ size: number; className?: string }>;
+  label: string;
+  value: string | number;
+  active?: boolean;
+}) => (
   <div
     className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${active ? "bg-neutral-800/80 border-neutral-700" : "bg-neutral-800/40 border-neutral-700/50"}`}
   >
@@ -148,7 +165,12 @@ const MobileMenuItem = ({
   label,
   onClick,
   danger = false,
-}: any) => (
+}: {
+  icon: React.ComponentType<{ size: number }>;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) => (
   <button
     onClick={onClick}
     className="w-full flex items-center justify-between py-4 border-b border-neutral-100 hover:bg-neutral-50 transition-colors group"
@@ -255,7 +277,7 @@ export default function SettingsPage() {
       } else {
         setMessage({ type: "error", text: "Failed to update" });
       }
-    } catch (err) {
+    } catch {
       setMessage({ type: "error", text: "Network error" });
     } finally {
       setLoading(false);
@@ -294,11 +316,12 @@ export default function SettingsPage() {
         setMessage(null);
         setView("main");
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
+      const firebaseError = err as { code?: string };
       if (
-        err.code === "auth/invalid-credential" ||
-        err.code === "auth/wrong-password"
+        firebaseError.code === "auth/invalid-credential" ||
+        firebaseError.code === "auth/wrong-password"
       ) {
         setMessage({ type: "error", text: "Current password incorrect" });
       } else {

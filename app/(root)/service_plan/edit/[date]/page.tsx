@@ -12,7 +12,6 @@ import {
   getNextEndTime,
   splitTimePeriod,
   joinTimePeriod,
-  toggleCaseInsensitive,
 } from "@/lib/servicePlanUtils";
 
 function EditServicePlanPage() {
@@ -123,7 +122,7 @@ function EditServicePlanPage() {
   const updateProgram = (
     index: number,
     field: keyof ServicePlanProgram,
-    value: string | string[]
+    value: string | string[],
   ) => {
     const updatedPrograms = [...formData.programs];
     updatedPrograms[index] = { ...updatedPrograms[index], [field]: value };
@@ -133,7 +132,7 @@ function EditServicePlanPage() {
   const updateTimePeriod = (
     index: number,
     startTime: string,
-    endTime: string
+    endTime: string,
   ) => {
     updateProgram(index, "TimePeriod", joinTimePeriod(startTime, endTime));
   };
@@ -141,12 +140,12 @@ function EditServicePlanPage() {
   const toggleAnchorField = (
     programIndex: number,
     field: "Anchors" | "BackupAnchors",
-    name: string
+    name: string,
   ) => {
     const program = formData.programs[programIndex];
     const selected = program[field];
     const next = selected.some(
-      (e: string) => e.toLowerCase() === name.toLowerCase()
+      (e: string) => e.toLowerCase() === name.toLowerCase(),
     )
       ? selected.filter((e: string) => e.toLowerCase() !== name.toLowerCase())
       : [...selected, name];
@@ -155,7 +154,7 @@ function EditServicePlanPage() {
 
   const addCustomAnchorTo = (
     programIndex: number,
-    field: "Anchors" | "BackupAnchors"
+    field: "Anchors" | "BackupAnchors",
   ) => {
     const input = window.prompt("Enter anchor name");
     const name = (input ?? "").trim();
@@ -217,7 +216,7 @@ function EditServicePlanPage() {
           } else {
             msg = await response.text();
           }
-        } catch (_err) {
+        } catch {
           msg = response.statusText || msg;
         }
         console.error("❌ Error:", msg);
@@ -385,7 +384,7 @@ function EditServicePlanPage() {
                             }
                             onChange={(time) => {
                               const startTime = splitTimePeriod(
-                                program.TimePeriod
+                                program.TimePeriod,
                               )[0];
                               updateTimePeriod(index, startTime, time);
                             }}
@@ -489,7 +488,7 @@ function EditServicePlanPage() {
                   formData.programs.flatMap((p) => [
                     ...p.Anchors,
                     ...p.BackupAnchors,
-                  ])
+                  ]),
                 ).size
               }{" "}
               unique participants
@@ -539,7 +538,7 @@ function AnchorSelector(props: {
 
   const customFiltered: string[] = [];
   const customLower = new Set<string>(
-    customFiltered.map((n) => n.toLowerCase())
+    customFiltered.map((n) => n.toLowerCase()),
   );
   const normalFiltered = members
     .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
@@ -597,7 +596,7 @@ function AnchorSelector(props: {
                 <input
                   type="checkbox"
                   checked={selected.some(
-                    (n) => n.toLowerCase() === name.toLowerCase()
+                    (n) => n.toLowerCase() === name.toLowerCase(),
                   )}
                   onChange={() => onToggle(name)}
                   className="w-4 h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500"
@@ -618,7 +617,7 @@ function AnchorSelector(props: {
                 <input
                   type="checkbox"
                   checked={selected.some(
-                    (n) => n.toLowerCase() === m.name.toLowerCase()
+                    (n) => n.toLowerCase() === m.name.toLowerCase(),
                   )}
                   onChange={() => onToggle(m.name)}
                   className="w-5 h-5 sm:w-4 sm:h-4 text-blue-600 bg-neutral-600 border-neutral-500 rounded focus:ring-blue-500 flex-shrink-0"

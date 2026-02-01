@@ -1,4 +1,3 @@
-// @ts-ignore: side-effect CSS import without type declarations
 import "../globals.css";
 import { AuthContextProvider } from "@/lib/ClientAuth";
 import { NavBarDeskt, NavBarMobile } from "@/components/NavBar";

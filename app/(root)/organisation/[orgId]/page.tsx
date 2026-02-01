@@ -26,7 +26,7 @@ interface OrganizationData {
     url: string;
   };
   registry_form_url: string;
-  createdAt?: any;
+  createdAt?: string | Date | null;
 }
 
 export default function OrganizationDetailsPage() {

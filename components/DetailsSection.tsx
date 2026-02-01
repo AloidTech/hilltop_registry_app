@@ -14,7 +14,7 @@ import {
   FiArrowLeft,
 } from "react-icons/fi";
 import { MdWork, MdVerified, MdPerson, MdGroup } from "react-icons/md";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { Member } from "@/app/(root)/page";
 
@@ -215,9 +215,9 @@ const pageTransition = {
 };
 
 // --- Desktop Details Section ---
-const DetailsSection: React.FC<DetailsSectionProps> = ({ member, onClose }) => {
+const DetailsSection: React.FC<DetailsSectionProps> = ({ member }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
 
   if (isLoading) {
     return <DetailsSkeleton />;

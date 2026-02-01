@@ -18,7 +18,14 @@ export const OrgSelectionModal = ({
 }) => {
   const { user } = useAuth();
   const { setSelectedOrg, selectedOrg } = useOrgStore();
-  const [orgs, setOrgs] = useState<any[]>([]);
+  const [orgs, setOrgs] = useState<
+    {
+      id: string;
+      name: string;
+      user_id: string;
+      registry_sheet: { name: string; url: string };
+    }[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +39,12 @@ export const OrgSelectionModal = ({
     }
   }, [isOpen, user]);
 
-  const handleSelect = (org: any) => {
+  const handleSelect = (org: {
+    id: string;
+    name: string;
+    user_id: string;
+    registry_sheet: { name: string; url: string };
+  }) => {
     setSelectedOrg({
       id: org.id,
       name: org.name,

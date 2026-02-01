@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BsChevronDown, BsClock, BsPlus, BsTrash } from "react-icons/bs";
+import { BsClock, BsPlus, BsTrash } from "react-icons/bs";
 import { FiSave, FiArrowLeft, FiCalendar } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { useOrgStore } from "@/lib/store";
@@ -14,8 +14,6 @@ import {
   getNextEndTime,
   splitTimePeriod,
   joinTimePeriod,
-  toggleCaseInsensitive,
-  uniqueAnchorsCount,
 } from "@/lib/servicePlanUtils";
 
 function AddServicePlanPage() {
@@ -201,7 +199,7 @@ function AddServicePlanPage() {
           } else {
             msg = await response.text();
           }
-        } catch (err) {
+        } catch {
           // ignore parse errors, fallback to status text
           msg = response.statusText || msg;
         }

@@ -329,7 +329,7 @@ export default function OrganisationPage() {
       // find full org object from list if needed, but for now just use what we have
       // Actually, we should wait until orgs are loaded to map it
     }
-  }, [selectedOrg]);
+  }, [selectedOrg, localSelectedOrg]);
 
   const loadOrgs = async () => {
     if (!user) return;
@@ -338,17 +338,27 @@ export default function OrganisationPage() {
       const data = await fetchUserOrgs(user);
       if (data) {
         // Transform data to match Org interface if needed
-        const mappedOrgs = data.map((o: any) => ({
-          id: o.id,
-          name: o.name,
-          role: o.user_id === user.uid ? "Owner" : "Member",
-          registry_sheet: {
-            ...o.registry_sheet,
-            form_url: o.registry_form_url,
-          },
-          member_count: o.member_count,
-          recent_activity: o.recent_activity,
-        }));
+        const mappedOrgs = data.map(
+          (o: {
+            id: string;
+            name: string;
+            user_id: string;
+            registry_sheet: { name: string; url: string };
+            registry_form_url: string;
+            member_count?: number;
+            recent_activity?: string;
+          }) => ({
+            id: o.id,
+            name: o.name,
+            role: o.user_id === user.uid ? "Owner" : "Member",
+            registry_sheet: {
+              ...o.registry_sheet,
+              form_url: o.registry_form_url,
+            },
+            member_count: o.member_count,
+            recent_activity: o.recent_activity,
+          }),
+        );
         setOrgs(mappedOrgs);
         if (selectedOrg) {
           const found = mappedOrgs.find((o: Org) => o.id === selectedOrg.id);
@@ -367,6 +377,7 @@ export default function OrganisationPage() {
       if (!user) router.push("/auth/login");
       else loadOrgs();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user]);
 
   const handleSelect = (org: Org) => {
@@ -399,7 +410,11 @@ export default function OrganisationPage() {
             <div className="h-12 w-full skeleton-shimmer rounded-xl" />
           </div>
           <div className="flex-1">
-            {Array(5).fill(0).map((_, i) => <ListSkeleton key={i} />)}
+            {Array(5)
+              .fill(0)
+              .map((_, i) => (
+                <ListSkeleton key={i} />
+              ))}
           </div>
         </div>
         <div className="hidden lg:flex flex-1 bg-[var(--bg-secondary)] items-center justify-center">

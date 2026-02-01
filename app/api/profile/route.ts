@@ -16,8 +16,9 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, profile: profileDoc.data() });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message || e });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ ok: false, error: message });
   }
 }
 
@@ -40,11 +41,9 @@ export async function PATCH(request: NextRequest) {
       .set(updates, { merge: true });
 
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Error updating profile:", e);
-    return NextResponse.json(
-      { ok: false, error: e.message || e },
-      { status: 500 },
-    );
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const id = `${user_id}___${name}`;
     console.log("id: ", id);
 
-    const ok = await adminDb.collection("organisations").doc(id).create({
+    await adminDb.collection("organisations").doc(id).create({
       name,
       user_id,
       registry_sheet,
@@ -74,29 +74,31 @@ export async function GET(request: NextRequest) {
         console.log("Snapshot: ", snapShot);
         if (snapShot?.empty) return NextResponse.json([], { status: 200 });
 
-        const organisations = snapShot?.docs.map((doc: any) => {
-          let data = doc.data();
-          return {
-            id: doc.id,
-            createdAt: data.createdAt.toDate().toISOString(), // Include the document ID
-            ...data, // Spread the actual fields (name, url, etc.)
-          };
-        });
+        const organisations = snapShot?.docs.map(
+          (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              createdAt: data.createdAt.toDate().toISOString(), // Include the document ID
+              ...data, // Spread the actual fields (name, url, etc.)
+            };
+          },
+        );
         console.log("=====================================");
         console.log("Organizations: ", organisations);
         console.log("=====================================");
 
         return NextResponse.json({ organisations });
-      } catch (e: any) {
-        throw new Error(e);
+      } catch (e: unknown) {
+        throw new Error(e instanceof Error ? e.message : String(e));
       }
     } else if (type === "byId" && id) {
       try {
         snapShot = (
           await adminDb.collection("organisations").doc(id).get()
         ).data();
-      } catch (e: any) {
-        throw new Error(e);
+      } catch (e: unknown) {
+        throw new Error(e instanceof Error ? e.message : String(e));
       }
       if (snapShot?.user_id !== user_id)
         if (!snapShot) return NextResponse.json([], { status: 200 });
@@ -112,9 +114,10 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ organisation });
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error(e);
-    return NextResponse.json({ error: e.message || e.error });
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: message });
   }
 }
 
@@ -157,10 +160,11 @@ export async function PATCH(request: NextRequest) {
       message: "Organization updated successfully",
       id,
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error(e);
+    const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json(
-      { error: e.message || "Failed to update organization" },
+      { error: message || "Failed to update organization" },
       { status: 500 },
     );
   }

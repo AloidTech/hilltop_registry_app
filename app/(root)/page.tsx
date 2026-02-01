@@ -9,7 +9,9 @@ import { FaUserPlus, FaUser, FaUsers } from "react-icons/fa";
 import { useAuth } from "@/lib/ClientAuth";
 import { useOrgStore } from "@/lib/store";
 import { OrgSelectionModal } from "@/components/OrgSelectionModal";
-import DetailsSection, { DetailsSectionMobile } from "@/components/DetailsSection";
+import DetailsSection, {
+  DetailsSectionMobile,
+} from "@/components/DetailsSection";
 
 // --- Types ---
 
@@ -136,6 +138,7 @@ export default function MembersPage() {
       fetchMembers();
       setShowOrgModal(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOrg]);
 
   const fetchMembers = async () => {
@@ -172,7 +175,11 @@ export default function MembersPage() {
             <div className="h-12 w-full skeleton-shimmer rounded-xl" />
           </div>
           <div className="flex-1">
-            {Array(6).fill(0).map((_, i) => <MemberSkeleton key={i} />)}
+            {Array(6)
+              .fill(0)
+              .map((_, i) => (
+                <MemberSkeleton key={i} />
+              ))}
           </div>
         </div>
         {/* Skeleton Details */}
