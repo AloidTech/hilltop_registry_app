@@ -7,8 +7,9 @@ interface OrganisationSummary {
   role: string;
   registry_sheet?: {
     // Make it optional as it might not always be there fully populated
-    name: string;
+    name?: string;
     url: string;
+    form_url: string;
   };
   // Add other properties if needed
 }

@@ -11,7 +11,7 @@ import { FiUser, FiCalendar, FiEdit3, FiDownload } from "react-icons/fi";
 import { MdExpandMore, MdSwapHoriz } from "react-icons/md";
 import { useRouter } from "next/navigation";
 import { useOrgStore } from "@/lib/store";
-import { OrgSelectionModal } from "@/components/OrgSelectionModal";
+import { OrgSelectionModal } from "@/components/modals/OrgSelectionModal";
 
 export interface ServicePlanProp {
   id: string;
@@ -119,7 +119,7 @@ function ServicePlanPage() {
 
   if (plansLoading) {
     return (
-      <div className="flex-1 pb-28 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-auto">
+      <div className="flex-1 pb-28 px-6 bg-[var(--bg-primary)] backdrop-blur-sm h-screen overflow-y-auto">
         {/* Header Skeleton */}
         <motion.div className="flex justify-between -mx-6 items-center px-8 py-4 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
           <div>
@@ -223,7 +223,7 @@ function ServicePlanPage() {
   }
 
   return (
-    <div className="flex-1 pb-28 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-auto">
+    <div className="flex-1 pb-28 px-6 bg-[var(--bg-primary)] backdrop-blur-sm h-screen overflow-y-auto">
       {/* Enhanced Header */}
       <motion.div className="flex justify-between -mx-6 items-center px-8 py-4 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
         <div>
@@ -364,15 +364,7 @@ function ServicePlanPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 md:gap-3">
-                  {/* Status Badge */}
-                  <span
-                    className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                      index,
-                    )}`}
-                  >
-                    {getStatusText(index)}
-                  </span>
+                <div className="flex items-center gap-3 md:gap-3">
                   {/* Toggle Anchors <-> Backup Anchors */}
                   <motion.button
                     whileHover={{ scale: 1.1 }}
@@ -384,7 +376,7 @@ function ServicePlanPage() {
                         [planDate]: !prev[planDate],
                       }));
                     }}
-                    className={`p-1.5 md:p-2 rounded-lg transition-colors border ${
+                    className={`p-2.5 md:p-2 rounded-lg transition-colors border ${
                       showBackups[planDate]
                         ? "bg-purple-600 border-purple-500 text-white hover:bg-purple-500"
                         : "hover:bg-neutral-600 border-purple-500/30 text-purple-300"
@@ -398,7 +390,7 @@ function ServicePlanPage() {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className="p-1.5 md:p-2 hover:bg-neutral-600 rounded-lg transition-colors"
+                      className="p-2.5 md:p-2 hover:bg-neutral-600 border border-neutral-500/60 rounded-lg transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         router.push(
@@ -413,21 +405,21 @@ function ServicePlanPage() {
                   {/* Expand Icon */}
                   <motion.div
                     animate={{ rotate: expandedPlan === planDate ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.15 }}
                   >
                     <MdExpandMore className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                   </motion.div>
                 </div>
               </div>
 
-              {/* Expanded Content */}
+              {/* Expanded Content - Sliding Animation */}
               <AnimatePresence>
                 {expandedPlan === planDate && ServicePlans[planDate] && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, x: "100%" }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: "100%" }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     className="border-t border-neutral-600/50"
                   >
                     <div className="p-4 md:p-6 bg-neutral-800/30">

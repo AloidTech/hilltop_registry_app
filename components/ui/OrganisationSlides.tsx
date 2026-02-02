@@ -79,12 +79,12 @@ const Slide1 = ({
       {/* Registry Sheet Name (Internal Reference) */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-neutral-300 flex items-center gap-2">
-          <FaFileAlt className="text-blue-400" /> Registry Sheet Name
+          <FaFileAlt className="text-blue-400" /> Registry Sheet Name *
         </label>
         <input
           type="text"
           name="registrySheetName"
-          required
+          
           value={formData.registrySheetName}
           onChange={handleChange}
           placeholder="e.g. Master Registry 2024"

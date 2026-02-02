@@ -24,6 +24,7 @@ export const OrgSelectionModal = ({
       name: string;
       user_id: string;
       registry_sheet: { name: string; url: string };
+      registry_form_url?: string;
     }[]
   >([]);
   const [loading, setLoading] = useState(true);
@@ -44,12 +45,16 @@ export const OrgSelectionModal = ({
     name: string;
     user_id: string;
     registry_sheet: { name: string; url: string };
+    registry_form_url?: string;
   }) => {
     setSelectedOrg({
       id: org.id,
       name: org.name,
       role: user?.uid === org.user_id ? "Owner" : "Member", // Basic role logic
-      registry_sheet: org.registry_sheet,
+      registry_sheet: {
+        ...org.registry_sheet,
+        form_url: org.registry_form_url || "",
+      },
     });
     if (onClose) onClose();
   };

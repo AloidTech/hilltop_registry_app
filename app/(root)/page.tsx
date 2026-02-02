@@ -8,10 +8,10 @@ import { FaUserPlus, FaUser, FaUsers } from "react-icons/fa";
 
 import { useAuth } from "@/lib/ClientAuth";
 import { useOrgStore } from "@/lib/store";
-import { OrgSelectionModal } from "@/components/OrgSelectionModal";
+import { OrgSelectionModal } from "@/components/modals/OrgSelectionModal";
 import DetailsSection, {
   DetailsSectionMobile,
-} from "@/components/DetailsSection";
+} from "@/components/ui/DetailsSection";
 
 // --- Types ---
 
@@ -195,7 +195,7 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="flex bg-[var(--bg-primary)] min-h-screen">
+    <div className="flex bg-[var(--bg-primary)] pb-23 min-h-screen">
       <OrgSelectionModal
         isOpen={showOrgModal}
         onClose={() => selectedOrg && setShowOrgModal(false)}
@@ -220,7 +220,15 @@ export default function MembersPage() {
               </span>
             </h1>
             <button
-              onClick={() => router.push("/workers/signup")}
+              onClick={() => {
+                if (selectedOrg?.registry_sheet?.form_url) {
+                  window.open(
+                    selectedOrg.registry_sheet?.form_url,
+                    "_blank",
+                    "noopener,noreferrer",
+                  );
+                }
+              }}
               className="w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-colors shadow-lg shadow-indigo-500/20"
             >
               <FaUserPlus size={18} />

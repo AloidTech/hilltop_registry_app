@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { checkProfile, useAuth } from "@/lib/ClientAuth";
 import { useRouter } from "next/navigation";
-import OrganisationSlides from "@/components/OrganisationSlides";
+import OrganisationSlides from "@/components/ui/OrganisationSlides";
 import {
   FaBuilding,
   FaArrowRight,

@@ -105,20 +105,6 @@ export function NavBarDeskt() {
       >
         <FiSettings size={24} />
       </button>
-
-      {/* Bottom/profile (user icon) */}
-      <button
-        title="Profile"
-        onClick={() => {
-          setPressedButtonId("10");
-          router.push("/auth/login"); // change to /profile if you have a profile page
-        }}
-        className={`${baseBtn} w-11 h-11 mb-2 ${
-          pressedButtonId === "10" ? activeBtn : ""
-        }`}
-      >
-        <BiUserCircle size={30} />
-      </button>
     </div>
   );
 }

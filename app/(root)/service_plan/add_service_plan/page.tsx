@@ -5,8 +5,8 @@ import { BsClock, BsPlus, BsTrash } from "react-icons/bs";
 import { FiSave, FiArrowLeft, FiCalendar } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { useOrgStore } from "@/lib/store";
-import { OrgSelectionModal } from "@/components/OrgSelectionModal";
-import { CustomTimePicker } from "@/components/TimePicker";
+import { OrgSelectionModal } from "@/components/modals/OrgSelectionModal";
+import { CustomTimePicker } from "@/components/forms/TimePicker";
 import {
   Member,
   ServicePlanProgram,
@@ -223,7 +223,7 @@ function AddServicePlanPage() {
   // Show loading screen while members are being fetched
   if (membersLoading) {
     return (
-      <div className="flex-1 px-6 bg-neutral-800/50 backdrop-blur-sm h-screen overflow-y-">
+      <div className="flex-1 px-6  bg-[var(--bg-primary)] backdrop-blur-sm h-screen overflow-y-">
         {/* Header Skeleton */}
         <motion.div className="sticky top-0 z-10 flex justify-between -mx-6 items-center px-6 py-2 mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
           <div className="flex items-center gap-4">
@@ -321,7 +321,7 @@ function AddServicePlanPage() {
   }
 
   return (
-    <div className="flex-1 px-3 sm:px-6 bg-neutral-800/50 h-full flex flex-col">
+    <div className="flex-1 px-3 sm:px-6 bg-[var(--bg-primary)] h-full flex flex-col">
       {/* Compact Header */}
       <motion.div className="sticky top-0 z-30 flex justify-between -mx-3 sm:-mx-6 items-center px-3 sm:px-6 py-3 sm:py-2 mb-4 sm:mb-6 bg-neutral-700/30 backdrop-blur-sm border-b border-neutral-600/50">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
