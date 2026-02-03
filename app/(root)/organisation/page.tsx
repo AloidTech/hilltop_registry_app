@@ -10,7 +10,6 @@ import {
   FaFileAlt,
   FaUsers,
   FaClock,
-  FaChevronRight,
   FaChevronLeft,
   FaArrowLeft,
   FaPen,

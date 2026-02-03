@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { MdMenu } from "react-icons/md";
-import { BiCalendarEvent, BiUserCircle } from "react-icons/bi";
+import { BiCalendarEvent } from "react-icons/bi";
 import { FiUsers, FiSettings, FiBriefcase } from "react-icons/fi";
 
 export function NavBarDeskt() {

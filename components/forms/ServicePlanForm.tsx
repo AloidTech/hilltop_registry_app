@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BsClock, BsPlus, BsTrash } from "react-icons/bs";
 import { FiSave, FiX, FiCalendar } from "react-icons/fi";
 import { useOrgStore } from "@/lib/store";
-import { CustomTimePicker } from "@/components/TimePicker";
+import { CustomTimePicker } from "@/components/forms/TimePicker";
 import {
   Member,
   ServicePlanProgram,

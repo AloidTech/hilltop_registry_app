@@ -89,22 +89,6 @@ function ServicePlanPage() {
     setExpandedPlan(expandedPlan === planDate ? null : planDate);
   };
 
-  const getStatusColor = (index: number) => {
-    if (index === 0)
-      return "bg-green-500/20 text-green-400 border-green-500/30";
-    if (index === 1) return "bg-blue-500/20 text-blue-400 border-blue-500/30";
-    return "bg-gray-500/20 text-gray-400 border-gray-500/30";
-  };
-
-  const getStatusText = (index: number) => {
-    if (index === 0) return "Latest";
-    if (index === 1) return "Previous";
-    return new Date(servicePlanDates[index]).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   // Calculate total programs across all plans
   const totalPrograms = Object.values(ServicePlans).reduce(
     (total, programs) => total + programs.length,

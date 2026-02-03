@@ -365,7 +365,7 @@ function EditServicePlanPage() {
                         <div className="flex-1">
                           <CustomTimePicker
                             value={splitTimePeriod(program.TimePeriod)[0]}
-                            onChange={(time: any) => {
+                            onChange={(time: string) => {
                               const endTime =
                                 splitTimePeriod(program.TimePeriod)[1] ||
                                 "7:05am";
@@ -382,7 +382,7 @@ function EditServicePlanPage() {
                             value={
                               splitTimePeriod(program.TimePeriod)[1] || "7:05am"
                             }
-                            onChange={(time: any) => {
+                            onChange={(time: string) => {
                               const startTime = splitTimePeriod(
                                 program.TimePeriod,
                               )[0];
